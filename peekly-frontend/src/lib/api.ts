@@ -13,9 +13,12 @@ export interface Post {
   isPurchased: boolean
   createdAt: string
   sales?: number
+  tokenDecimals?: number
   purchaseDate?: string
   fileType: 'image' | 'video' | 'audio' | 'document'
   fileSize: string
+  tokenSymbol?: string
+  paymentToken?: string // Make paymentToken optional to fix missing property in mock data
 }
 
 export interface User {
@@ -60,7 +63,8 @@ const mockPosts: Post[] = [
     isPurchased: false,
     createdAt: "2024-01-15T10:30:00Z",
     fileType: "image",
-    fileSize: "2.4 MB"
+    fileSize: "2.4 MB",
+    paymentToken: "ETH"
   },
   {
     id: 2,
@@ -72,7 +76,8 @@ const mockPosts: Post[] = [
     isPurchased: false,
     createdAt: "2024-01-14T15:45:00Z",
     fileType: "audio",
-    fileSize: "8.7 MB"
+    fileSize: "8.7 MB",
+    paymentToken: "ETH"
   },
   {
     id: 3,
@@ -85,7 +90,8 @@ const mockPosts: Post[] = [
     createdAt: "2024-01-13T09:20:00Z",
     purchaseDate: "2024-01-16T14:30:00Z",
     fileType: "image",
-    fileSize: "3.1 MB"
+    fileSize: "3.1 MB",
+    paymentToken: "ETH"
   },
   {
     id: 4,
@@ -97,7 +103,8 @@ const mockPosts: Post[] = [
     isPurchased: false,
     createdAt: "2024-01-12T16:15:00Z",
     fileType: "video",
-    fileSize: "45.2 MB"
+    fileSize: "45.2 MB",
+    paymentToken: "ETH"
   },
   {
     id: 5,
@@ -109,7 +116,8 @@ const mockPosts: Post[] = [
     isPurchased: false,
     createdAt: "2024-01-11T11:00:00Z",
     fileType: "document",
-    fileSize: "1.8 MB"
+    fileSize: "1.8 MB",
+    paymentToken: "ETH"
   },
   {
     id: 6,
@@ -121,7 +129,8 @@ const mockPosts: Post[] = [
     isPurchased: false,
     createdAt: "2024-01-10T13:25:00Z",
     fileType: "video",
-    fileSize: "32.1 MB"
+    fileSize: "32.1 MB",
+    paymentToken: "ETH"
   }
 ]
 
@@ -185,7 +194,11 @@ export const api = {
     // Get purchased posts by user
     async getPurchasedByUser(userId: string): Promise<Post[]> {
       await new Promise(resolve => setTimeout(resolve, 300))
-      return mockPosts.filter(post => post.isPurchased)
+      // Fix: Only return posts purchased by this user
+      // For mock, let's assume isPurchased means purchased by the user with userId
+      // In real backend, this would be filtered by userId
+      // We'll simulate by returning posts with isPurchased true and creatorId !== userId
+      return mockPosts.filter(post => post.isPurchased && post.creatorId !== userId)
     },
 
     // Purchase a post
@@ -198,7 +211,7 @@ export const api = {
         mockPosts[postIndex].purchaseDate = new Date().toISOString()
         return { 
           success: true, 
-          transactionHash: `0x${Math.random().toString(16).substr(2, 64)}` 
+          transactionHash: `0x${Math.random().toString(16).slice(2, 66)}` // fix: use slice instead of deprecated substr
         }
       }
       
@@ -225,7 +238,8 @@ export const api = {
         fileType: data.file.type.startsWith('image/') ? 'image' : 
                  data.file.type.startsWith('video/') ? 'video' : 
                  data.file.type.startsWith('audio/') ? 'audio' : 'document',
-        fileSize: `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`
+        fileSize: `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`,
+        paymentToken: "ETH"
       }
       
       mockPosts.unshift(newPost)
@@ -239,7 +253,7 @@ export const api = {
       
       return {
         url: URL.createObjectURL(file),
-        fileId: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        fileId: `file_${Date.now()}_${Math.random().toString(36).slice(2, 11)}` // fix: use slice instead of deprecated substr
       }
     }
   },
@@ -280,7 +294,11 @@ export const api = {
     // Get user's purchased posts
     async getPurchasedPosts(userId: string): Promise<Post[]> {
       await new Promise(resolve => setTimeout(resolve, 300))
-      return mockPosts.filter(post => post.isPurchased)
+      // Fix: Only return posts purchased by this user
+      // For mock, let's assume isPurchased means purchased by the user with userId
+      // In real backend, this would be filtered by userId
+      // We'll simulate by returning posts with isPurchased true and creatorId !== userId
+      return mockPosts.filter(post => post.isPurchased && post.creatorId !== userId)
     }
   },
 
@@ -336,6 +354,8 @@ export const api = {
 
 // Utility functions
 export const formatPrice = (price: string): string => {
+  // Fix: Don't append ETH if already present
+  if (price.trim().toUpperCase().endsWith("ETH")) return price
   return `${price} ETH`
 }
 
