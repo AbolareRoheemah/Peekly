@@ -35,7 +35,9 @@ export function SignInButton() {
       if (user.isNewUser) {
         try {
           setIsCreatingUser(true);
-          await createUser(user.user.id);
+          // Get the user's address from the Privy user object
+          const userAddress = user.user.wallet?.address;
+          await createUser(user.user.id, userAddress);
           console.log("✅ User created successfully in database");
         } catch (err) {
           console.error("❌ Failed to create user:", err);

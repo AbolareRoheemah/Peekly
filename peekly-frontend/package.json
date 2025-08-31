@@ -11,6 +11,7 @@
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "@privy-io/react-auth": "^2.24.0",
+    "lucide-react": "^0.460.0",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@tanstack/react-query": "^5.85.6",
     "next": "15.5.2",

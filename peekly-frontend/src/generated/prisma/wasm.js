@@ -133,13 +133,13 @@ exports.Prisma.UserScalarFieldEnum = {
 exports.Prisma.PostScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  coinAddress: 'coinAddress',
-  previewUrl: 'previewUrl',
+  ipfs: 'ipfs',
   LikeCount: 'LikeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   description: 'description',
-  creatorAddress: 'creatorAddress'
+  creatorAddress: 'creatorAddress',
+  price: 'price'
 };
 
 exports.Prisma.LikeScalarFieldEnum = {
