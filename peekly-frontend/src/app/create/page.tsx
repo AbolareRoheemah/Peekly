@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { ArrowLeft, Upload, X } from "lucide-react"
 import Link from "next/link"
+import { api, formatFileSize } from "@/lib/api"
 
 export default function CreatePostPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -49,17 +50,34 @@ export default function CreatePostPage() {
 
     setIsCreating(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      // In a real app, you'd get the current user ID from auth context
+      const currentUserId = "user_1" // Mock user ID
+      
+      const result = await api.create.createPost({
+        file: selectedFile,
+        caption,
+        price,
+        creatorId: currentUserId
+      })
 
-    // Reset form
-    setSelectedFile(null)
-    setCaption("")
-    setPrice("")
-    setIsCreating(false)
-
-    // Show success message (in real app, would redirect or show notification)
-    alert("Post created successfully!")
+      if (result.success) {
+        // Reset form
+        setSelectedFile(null)
+        setCaption("")
+        setPrice("")
+        
+        // Show success message and redirect
+        alert("Post created successfully!")
+        // In a real app, you might redirect to the posts page or the created post
+        window.location.href = "/posts"
+      }
+    } catch (error) {
+      console.error("Error creating post:", error)
+      alert("Failed to create post. Please try again.")
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const getFileType = (file: File) => {
@@ -69,13 +87,7 @@ export default function CreatePostPage() {
     return "Document"
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
+
 
   return (
     <div className="min-h-screen bg-black text-white">

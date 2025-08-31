@@ -1,58 +1,67 @@
 "use client"
 
 import Image from "next/image"
-import { useState } from "react"
-
-// Mock data for posts
-const mockPosts = [
-  {
-    id: 1,
-    thumbnail: "/abstract-digital-composition.png",
-    caption: "Exclusive digital artwork - Limited edition NFT collection",
-    price: "0.05 ETH",
-    creator: "artist_crypto",
-    isPurchased: false,
-  },
-  {
-    id: 2,
-    thumbnail: "/music-waveform-visualization.png",
-    caption: "Unreleased track from my upcoming album 🎵",
-    price: "0.02 ETH",
-    creator: "musicmaker_eth",
-    isPurchased: false,
-  },
-  {
-    id: 3,
-    thumbnail: "/photography-landscape.png",
-    caption: "Behind the scenes content from my latest photoshoot",
-    price: "0.01 ETH",
-    creator: "photographer_pro",
-    isPurchased: true,
-  },
-  {
-    id: 4,
-    thumbnail: "/video-thumbnail.png",
-    caption: "Tutorial: Advanced trading strategies revealed",
-    price: "0.08 ETH",
-    creator: "crypto_trader",
-    isPurchased: false,
-  },
-  {
-    id: 5,
-    thumbnail: "/document-preview.png",
-    caption: "My complete guide to DeFi investing (50+ pages)",
-    price: "0.03 ETH",
-    creator: "defi_expert",
-    isPurchased: false,
-  },
-]
+import { useState, useEffect } from "react"
+import { api, Post, formatDate } from "@/lib/api"
 
 export default function PostsPage() {
-  const [posts, setPosts] = useState(mockPosts)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
 
-  const handlePurchase = (postId: number) => {
-    // Mock purchase functionality - in real app this would trigger smart contract
-    setPosts(posts.map((post) => (post.id === postId ? { ...post, isPurchased: true } : post)))
+  // Load posts on component mount
+  useEffect(() => {
+    loadPosts()
+  }, [])
+
+  const loadPosts = async (pageNum: number = 1) => {
+    try {
+      setLoading(true)
+      const result = await api.posts.getAll(pageNum, 6)
+      
+      if (pageNum === 1) {
+        setPosts(result.posts)
+      } else {
+        setPosts(prev => [...prev, ...result.posts])
+      }
+      
+      setHasMore(result.hasMore)
+      setPage(pageNum)
+    } catch (err) {
+      setError("Failed to load posts")
+      console.error("Error loading posts:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePurchase = async (postId: number) => {
+    try {
+      // In a real app, you'd get the current user ID from auth context
+      const currentUserId = "user_1" // Mock user ID
+      const result = await api.posts.purchase(postId, currentUserId)
+      
+      if (result.success) {
+        // Update the post in the local state
+        setPosts(posts.map((post) => 
+          post.id === postId 
+            ? { ...post, isPurchased: true, purchaseDate: new Date().toISOString() }
+            : post
+        ))
+        console.log("Purchase successful! Transaction hash:", result.transactionHash)
+      }
+    } catch (err) {
+      console.error("Purchase failed:", err)
+      alert("Purchase failed. Please try again.")
+    }
+  }
+
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      loadPosts(page + 1)
+    }
   }
 
   return (
@@ -74,8 +83,28 @@ export default function PostsPage() {
 
       {/* Posts Feed */}
       <main className="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {posts.map((post) => (
+        {loading && posts.length === 0 && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading posts...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => loadPosts(1)}
+              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {posts.map((post) => (
             <div
               key={post.id}
               className="bg-gray-900/50 border border-purple-900/30 rounded-xl overflow-hidden hover:border-purple-700/50 transition-colors"
@@ -131,18 +160,34 @@ export default function PostsPage() {
 
               {/* Post Caption */}
               <div className="p-4">
-                <p className="text-gray-200 leading-relaxed">{post.caption}</p>
+                <p className="text-gray-200 leading-relaxed mb-2">{post.caption}</p>
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>{formatDate(post.createdAt)}</span>
+                  <span>{post.fileType} • {post.fileSize}</span>
+                </div>
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Load More */}
-        <div className="text-center mt-12">
-          <button className="bg-gray-800 hover:bg-gray-700 border border-purple-900/30 px-8 py-3 rounded-lg text-gray-300 hover:text-white transition-colors">
-            Load More Posts
-          </button>
-        </div>
+        {hasMore && !loading && (
+          <div className="text-center mt-12">
+            <button 
+              onClick={loadMore}
+              className="bg-gray-800 hover:bg-gray-700 border border-purple-900/30 px-8 py-3 rounded-lg text-gray-300 hover:text-white transition-colors"
+            >
+              Load More Posts
+            </button>
+          </div>
+        )}
+
+        {loading && posts.length > 0 && (
+          <div className="text-center mt-12">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto"></div>
+          </div>
+        )}
       </main>
     </div>
   )
