@@ -2383,92 +2383,96 @@ export namespace Prisma {
 
   export type PostAvgAggregateOutputType = {
     LikeCount: number | null
+    price: number | null
   }
 
   export type PostSumAggregateOutputType = {
     LikeCount: number | null
+    price: number | null
   }
 
   export type PostMinAggregateOutputType = {
     id: string | null
     userId: string | null
-    coinAddress: string | null
-    previewUrl: string | null
+    ipfs: string | null
     LikeCount: number | null
     createdAt: Date | null
     updatedAt: Date | null
     description: string | null
     creatorAddress: string | null
+    price: number | null
   }
 
   export type PostMaxAggregateOutputType = {
     id: string | null
     userId: string | null
-    coinAddress: string | null
-    previewUrl: string | null
+    ipfs: string | null
     LikeCount: number | null
     createdAt: Date | null
     updatedAt: Date | null
     description: string | null
     creatorAddress: string | null
+    price: number | null
   }
 
   export type PostCountAggregateOutputType = {
     id: number
     userId: number
-    coinAddress: number
-    previewUrl: number
+    ipfs: number
     LikeCount: number
     createdAt: number
     updatedAt: number
     description: number
     creatorAddress: number
+    price: number
     _all: number
   }
 
 
   export type PostAvgAggregateInputType = {
     LikeCount?: true
+    price?: true
   }
 
   export type PostSumAggregateInputType = {
     LikeCount?: true
+    price?: true
   }
 
   export type PostMinAggregateInputType = {
     id?: true
     userId?: true
-    coinAddress?: true
-    previewUrl?: true
+    ipfs?: true
     LikeCount?: true
     createdAt?: true
     updatedAt?: true
     description?: true
     creatorAddress?: true
+    price?: true
   }
 
   export type PostMaxAggregateInputType = {
     id?: true
     userId?: true
-    coinAddress?: true
-    previewUrl?: true
+    ipfs?: true
     LikeCount?: true
     createdAt?: true
     updatedAt?: true
     description?: true
     creatorAddress?: true
+    price?: true
   }
 
   export type PostCountAggregateInputType = {
     id?: true
     userId?: true
-    coinAddress?: true
-    previewUrl?: true
+    ipfs?: true
     LikeCount?: true
     createdAt?: true
     updatedAt?: true
     description?: true
     creatorAddress?: true
+    price?: true
     _all?: true
   }
 
@@ -2561,13 +2565,13 @@ export namespace Prisma {
   export type PostGroupByOutputType = {
     id: string
     userId: string
-    coinAddress: string
-    previewUrl: string
+    ipfs: string
     LikeCount: number
     createdAt: Date
     updatedAt: Date
     description: string | null
     creatorAddress: string | null
+    price: number
     _count: PostCountAggregateOutputType | null
     _avg: PostAvgAggregateOutputType | null
     _sum: PostSumAggregateOutputType | null
@@ -2592,13 +2596,13 @@ export namespace Prisma {
   export type PostSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userId?: boolean
-    coinAddress?: boolean
-    previewUrl?: boolean
+    ipfs?: boolean
     LikeCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     description?: boolean
     creatorAddress?: boolean
+    price?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     Like?: boolean | Post$LikeArgs<ExtArgs>
     View?: boolean | Post$ViewArgs<ExtArgs>
@@ -2608,42 +2612,42 @@ export namespace Prisma {
   export type PostSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userId?: boolean
-    coinAddress?: boolean
-    previewUrl?: boolean
+    ipfs?: boolean
     LikeCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     description?: boolean
     creatorAddress?: boolean
+    price?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["post"]>
 
   export type PostSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userId?: boolean
-    coinAddress?: boolean
-    previewUrl?: boolean
+    ipfs?: boolean
     LikeCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     description?: boolean
     creatorAddress?: boolean
+    price?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["post"]>
 
   export type PostSelectScalar = {
     id?: boolean
     userId?: boolean
-    coinAddress?: boolean
-    previewUrl?: boolean
+    ipfs?: boolean
     LikeCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     description?: boolean
     creatorAddress?: boolean
+    price?: boolean
   }
 
-  export type PostOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "coinAddress" | "previewUrl" | "LikeCount" | "createdAt" | "updatedAt" | "description" | "creatorAddress", ExtArgs["result"]["post"]>
+  export type PostOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "ipfs" | "LikeCount" | "createdAt" | "updatedAt" | "description" | "creatorAddress" | "price", ExtArgs["result"]["post"]>
   export type PostInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     Like?: boolean | Post$LikeArgs<ExtArgs>
@@ -2667,13 +2671,13 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       userId: string
-      coinAddress: string
-      previewUrl: string
+      ipfs: string
       LikeCount: number
       createdAt: Date
       updatedAt: Date
       description: string | null
       creatorAddress: string | null
+      price: number
     }, ExtArgs["result"]["post"]>
     composites: {}
   }
@@ -3102,13 +3106,13 @@ export namespace Prisma {
   interface PostFieldRefs {
     readonly id: FieldRef<"Post", 'String'>
     readonly userId: FieldRef<"Post", 'String'>
-    readonly coinAddress: FieldRef<"Post", 'String'>
-    readonly previewUrl: FieldRef<"Post", 'String'>
+    readonly ipfs: FieldRef<"Post", 'String'>
     readonly LikeCount: FieldRef<"Post", 'Int'>
     readonly createdAt: FieldRef<"Post", 'DateTime'>
     readonly updatedAt: FieldRef<"Post", 'DateTime'>
     readonly description: FieldRef<"Post", 'String'>
     readonly creatorAddress: FieldRef<"Post", 'String'>
+    readonly price: FieldRef<"Post", 'Float'>
   }
     
 
@@ -5793,13 +5797,13 @@ export namespace Prisma {
   export const PostScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
-    coinAddress: 'coinAddress',
-    previewUrl: 'previewUrl',
+    ipfs: 'ipfs',
     LikeCount: 'LikeCount',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     description: 'description',
-    creatorAddress: 'creatorAddress'
+    creatorAddress: 'creatorAddress',
+    price: 'price'
   };
 
   export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
@@ -6001,13 +6005,13 @@ export namespace Prisma {
     NOT?: PostWhereInput | PostWhereInput[]
     id?: StringFilter<"Post"> | string
     userId?: StringFilter<"Post"> | string
-    coinAddress?: StringFilter<"Post"> | string
-    previewUrl?: StringFilter<"Post"> | string
+    ipfs?: StringFilter<"Post"> | string
     LikeCount?: IntFilter<"Post"> | number
     createdAt?: DateTimeFilter<"Post"> | Date | string
     updatedAt?: DateTimeFilter<"Post"> | Date | string
     description?: StringNullableFilter<"Post"> | string | null
     creatorAddress?: StringNullableFilter<"Post"> | string | null
+    price?: FloatFilter<"Post"> | number
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     Like?: LikeListRelationFilter
     View?: ViewListRelationFilter
@@ -6016,13 +6020,13 @@ export namespace Prisma {
   export type PostOrderByWithRelationInput = {
     id?: SortOrder
     userId?: SortOrder
-    coinAddress?: SortOrder
-    previewUrl?: SortOrder
+    ipfs?: SortOrder
     LikeCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     description?: SortOrderInput | SortOrder
     creatorAddress?: SortOrderInput | SortOrder
+    price?: SortOrder
     user?: UserOrderByWithRelationInput
     Like?: LikeOrderByRelationAggregateInput
     View?: ViewOrderByRelationAggregateInput
@@ -6034,13 +6038,13 @@ export namespace Prisma {
     OR?: PostWhereInput[]
     NOT?: PostWhereInput | PostWhereInput[]
     userId?: StringFilter<"Post"> | string
-    coinAddress?: StringFilter<"Post"> | string
-    previewUrl?: StringFilter<"Post"> | string
+    ipfs?: StringFilter<"Post"> | string
     LikeCount?: IntFilter<"Post"> | number
     createdAt?: DateTimeFilter<"Post"> | Date | string
     updatedAt?: DateTimeFilter<"Post"> | Date | string
     description?: StringNullableFilter<"Post"> | string | null
     creatorAddress?: StringNullableFilter<"Post"> | string | null
+    price?: FloatFilter<"Post"> | number
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     Like?: LikeListRelationFilter
     View?: ViewListRelationFilter
@@ -6049,13 +6053,13 @@ export namespace Prisma {
   export type PostOrderByWithAggregationInput = {
     id?: SortOrder
     userId?: SortOrder
-    coinAddress?: SortOrder
-    previewUrl?: SortOrder
+    ipfs?: SortOrder
     LikeCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     description?: SortOrderInput | SortOrder
     creatorAddress?: SortOrderInput | SortOrder
+    price?: SortOrder
     _count?: PostCountOrderByAggregateInput
     _avg?: PostAvgOrderByAggregateInput
     _max?: PostMaxOrderByAggregateInput
@@ -6069,13 +6073,13 @@ export namespace Prisma {
     NOT?: PostScalarWhereWithAggregatesInput | PostScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Post"> | string
     userId?: StringWithAggregatesFilter<"Post"> | string
-    coinAddress?: StringWithAggregatesFilter<"Post"> | string
-    previewUrl?: StringWithAggregatesFilter<"Post"> | string
+    ipfs?: StringWithAggregatesFilter<"Post"> | string
     LikeCount?: IntWithAggregatesFilter<"Post"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Post"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Post"> | Date | string
     description?: StringNullableWithAggregatesFilter<"Post"> | string | null
     creatorAddress?: StringNullableWithAggregatesFilter<"Post"> | string | null
+    price?: FloatWithAggregatesFilter<"Post"> | number
   }
 
   export type LikeWhereInput = {
@@ -6290,13 +6294,13 @@ export namespace Prisma {
 
   export type PostCreateInput = {
     id?: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     user: UserCreateNestedOneWithoutPostInput
     Like?: LikeCreateNestedManyWithoutPostInput
     View?: ViewCreateNestedManyWithoutPostInput
@@ -6305,26 +6309,26 @@ export namespace Prisma {
   export type PostUncheckedCreateInput = {
     id?: string
     userId: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     Like?: LikeUncheckedCreateNestedManyWithoutPostInput
     View?: ViewUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     user?: UserUpdateOneRequiredWithoutPostNestedInput
     Like?: LikeUpdateManyWithoutPostNestedInput
     View?: ViewUpdateManyWithoutPostNestedInput
@@ -6333,13 +6337,13 @@ export namespace Prisma {
   export type PostUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     Like?: LikeUncheckedUpdateManyWithoutPostNestedInput
     View?: ViewUncheckedUpdateManyWithoutPostNestedInput
   }
@@ -6347,36 +6351,36 @@ export namespace Prisma {
   export type PostCreateManyInput = {
     id?: string
     userId: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
   }
 
   export type PostUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
   }
 
   export type PostUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
   }
 
   export type LikeCreateInput = {
@@ -6668,6 +6672,17 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type FloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -6676,45 +6691,47 @@ export namespace Prisma {
   export type PostCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
-    coinAddress?: SortOrder
-    previewUrl?: SortOrder
+    ipfs?: SortOrder
     LikeCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     description?: SortOrder
     creatorAddress?: SortOrder
+    price?: SortOrder
   }
 
   export type PostAvgOrderByAggregateInput = {
     LikeCount?: SortOrder
+    price?: SortOrder
   }
 
   export type PostMaxOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
-    coinAddress?: SortOrder
-    previewUrl?: SortOrder
+    ipfs?: SortOrder
     LikeCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     description?: SortOrder
     creatorAddress?: SortOrder
+    price?: SortOrder
   }
 
   export type PostMinOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
-    coinAddress?: SortOrder
-    previewUrl?: SortOrder
+    ipfs?: SortOrder
     LikeCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     description?: SortOrder
     creatorAddress?: SortOrder
+    price?: SortOrder
   }
 
   export type PostSumOrderByAggregateInput = {
     LikeCount?: SortOrder
+    price?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -6731,6 +6748,22 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
   }
 
   export type PostScalarRelationFilter = {
@@ -6760,17 +6793,6 @@ export namespace Prisma {
     postId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type FloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type BoolFilter<$PrismaModel = never> = {
@@ -6814,22 +6836,6 @@ export namespace Prisma {
 
   export type ViewSumOrderByAggregateInput = {
     amount?: SortOrder
-  }
-
-  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedFloatFilter<$PrismaModel>
-    _min?: NestedFloatFilter<$PrismaModel>
-    _max?: NestedFloatFilter<$PrismaModel>
   }
 
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -7020,6 +7026,14 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type FloatFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type UserUpdateOneRequiredWithoutPostNestedInput = {
     create?: XOR<UserCreateWithoutPostInput, UserUncheckedCreateWithoutPostInput>
     connectOrCreate?: UserCreateOrConnectWithoutPostInput
@@ -7122,14 +7136,6 @@ export namespace Prisma {
     create?: XOR<PostCreateWithoutViewInput, PostUncheckedCreateWithoutViewInput>
     connectOrCreate?: PostCreateOrConnectWithoutViewInput
     connect?: PostWhereUniqueInput
-  }
-
-  export type FloatFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -7261,6 +7267,17 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -7275,22 +7292,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -7309,6 +7310,11 @@ export namespace Prisma {
     _max?: NestedFloatFilter<$PrismaModel>
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
@@ -7319,26 +7325,26 @@ export namespace Prisma {
 
   export type PostCreateWithoutUserInput = {
     id?: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     Like?: LikeCreateNestedManyWithoutPostInput
     View?: ViewCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutUserInput = {
     id?: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     Like?: LikeUncheckedCreateNestedManyWithoutPostInput
     View?: ViewUncheckedCreateNestedManyWithoutPostInput
   }
@@ -7427,13 +7433,13 @@ export namespace Prisma {
     NOT?: PostScalarWhereInput | PostScalarWhereInput[]
     id?: StringFilter<"Post"> | string
     userId?: StringFilter<"Post"> | string
-    coinAddress?: StringFilter<"Post"> | string
-    previewUrl?: StringFilter<"Post"> | string
+    ipfs?: StringFilter<"Post"> | string
     LikeCount?: IntFilter<"Post"> | number
     createdAt?: DateTimeFilter<"Post"> | Date | string
     updatedAt?: DateTimeFilter<"Post"> | Date | string
     description?: StringNullableFilter<"Post"> | string | null
     creatorAddress?: StringNullableFilter<"Post"> | string | null
+    price?: FloatFilter<"Post"> | number
   }
 
   export type LikeUpsertWithWhereUniqueWithoutUserInput = {
@@ -7671,13 +7677,13 @@ export namespace Prisma {
 
   export type PostCreateWithoutLikeInput = {
     id?: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     user: UserCreateNestedOneWithoutPostInput
     View?: ViewCreateNestedManyWithoutPostInput
   }
@@ -7685,13 +7691,13 @@ export namespace Prisma {
   export type PostUncheckedCreateWithoutLikeInput = {
     id?: string
     userId: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     View?: ViewUncheckedCreateNestedManyWithoutPostInput
   }
 
@@ -7748,13 +7754,13 @@ export namespace Prisma {
 
   export type PostUpdateWithoutLikeInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     user?: UserUpdateOneRequiredWithoutPostNestedInput
     View?: ViewUpdateManyWithoutPostNestedInput
   }
@@ -7762,13 +7768,13 @@ export namespace Prisma {
   export type PostUncheckedUpdateWithoutLikeInput = {
     id?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     View?: ViewUncheckedUpdateManyWithoutPostNestedInput
   }
 
@@ -7803,13 +7809,13 @@ export namespace Prisma {
 
   export type PostCreateWithoutViewInput = {
     id?: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     user: UserCreateNestedOneWithoutPostInput
     Like?: LikeCreateNestedManyWithoutPostInput
   }
@@ -7817,13 +7823,13 @@ export namespace Prisma {
   export type PostUncheckedCreateWithoutViewInput = {
     id?: string
     userId: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
     Like?: LikeUncheckedCreateNestedManyWithoutPostInput
   }
 
@@ -7880,13 +7886,13 @@ export namespace Prisma {
 
   export type PostUpdateWithoutViewInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     user?: UserUpdateOneRequiredWithoutPostNestedInput
     Like?: LikeUpdateManyWithoutPostNestedInput
   }
@@ -7894,25 +7900,25 @@ export namespace Prisma {
   export type PostUncheckedUpdateWithoutViewInput = {
     id?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     Like?: LikeUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostCreateManyUserInput = {
     id?: string
-    coinAddress: string
-    previewUrl: string
-    LikeCount: number
+    ipfs: string
+    LikeCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     description?: string | null
     creatorAddress?: string | null
+    price: number
   }
 
   export type LikeCreateManyUserInput = {
@@ -7933,39 +7939,39 @@ export namespace Prisma {
 
   export type PostUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     Like?: LikeUpdateManyWithoutPostNestedInput
     View?: ViewUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
     Like?: LikeUncheckedUpdateManyWithoutPostNestedInput
     View?: ViewUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    coinAddress?: StringFieldUpdateOperationsInput | string
-    previewUrl?: StringFieldUpdateOperationsInput | string
+    ipfs?: StringFieldUpdateOperationsInput | string
     LikeCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     creatorAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: FloatFieldUpdateOperationsInput | number
   }
 
   export type LikeUpdateWithoutUserInput = {
