@@ -31,14 +31,14 @@ model User {
 
 model Post {
   id          String   @id @default(uuid())
-  userId         String
-  coinAddress String
-  previewUrl  String
-  LikeCount   Int
+  userId      String
+  ipfs        String
+  LikeCount   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   description String?
   creatorAddress String?
+  price         Float
   user        User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
