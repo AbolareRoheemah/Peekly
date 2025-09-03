@@ -1,11 +1,4 @@
 "use server";
-import {
-  Synapse,
-  RPC_URLS,
-  CONTRACT_ADDRESSES,
-  TOKENS,
-} from "@filoz/synapse-sdk";
-import { ethers } from "ethers";
 import { prisma } from "../../../lib/prisma";
 
 export interface FileUploadData {
@@ -14,6 +7,7 @@ export interface FileUploadData {
   price: number;
   userId: string; // Add userId to identify the user creating the post
   creatorAddress?: string; // Optional creator address
+  ipfs: string;
 }
 
 export interface CreatePostData {
@@ -142,57 +136,10 @@ export async function createPostOnly(data: CreatePostData) {
 
 export async function uploadFileToFilecoin(data: FileUploadData) {
   try {
-    // Convert base64 data back to buffer
-    const fileBuffer = Buffer.from(data.fileData, "base64");
-
-    // Create Synapse instance
-    const synapse = await Synapse.create({
-      withCDN: true,
-      privateKey: process.env.SYNAPSE_PRIVATE_KEY,
-      rpcURL: "https://api.calibration.node.glif.io/rpc/v1",
-    });
-    // const amount = ethers.parseUnits("8", 18); // 8 USDFC
-    // await synapse.payments.deposit(amount, TOKENS.USDFC);
-
-    // Check current allowance
-    const paymentsContract = CONTRACT_ADDRESSES.PAYMENTS[synapse.getNetwork()];
-    const currentAllowance = await synapse.payments.allowance(
-      TOKENS.USDFC,
-      paymentsContract
-    );
-    console.log("Current allowance", currentAllowance);
-
-    // 2. Approve the Pandora service for automated payments
-    const pandoraAddress =
-      CONTRACT_ADDRESSES.PANDORA_SERVICE[synapse.getNetwork()];
-    await synapse.payments.approveService(
-      pandoraAddress,
-      ethers.parseUnits("10", 18), // Rate allowance: 10 USDFC per epoch
-      ethers.parseUnits("1000", 18) // Lockup allowance: 1000 USDFC total
-    );
-    console.log("Pandora service approved");
-
-    // Create storage service3
-    const storage = await synapse.createStorage();
-
-    // Upload file to Filecoin
-    const uploadResult = await storage.upload(fileBuffer);
-    console.log("Upload result", uploadResult);
-    const fileCoinCid = String(uploadResult.commp);
-    console.log("Filecoin CID", fileCoinCid);
-
-    // Generate a unique file ID
-    const fileId = `file_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-
-    // Ensure commp is converted to string
-    const commp = String(uploadResult.commp);
-
     // Create post in database with the filecoinId as IPFS
     const postResult = await createPost({
       userId: data.userId,
-      ipfs: commp, // Store the filecoinId as IPFS
+      ipfs: data.ipfs, // Store the filecoinId as IPFS
       description: data.description,
       price: data.price,
       creatorAddress: data.creatorAddress,
@@ -204,8 +151,7 @@ export async function uploadFileToFilecoin(data: FileUploadData) {
 
     return {
       success: true,
-      fileId,
-      commp,
+      ipfs: data.ipfs,
       post: postResult.post,
       message: "File uploaded to Filecoin and post created successfully!",
     };

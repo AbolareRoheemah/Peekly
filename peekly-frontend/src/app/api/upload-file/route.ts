@@ -4,10 +4,10 @@ import { uploadFileToFilecoin } from "../../actions/file-upload";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { fileData, description, price, userId, creatorAddress } = body;
+    const { fileData, description, price, userId, creatorAddress, ipfs } = body;
 
     // Validate required fields
-    if (!fileData || !description || !price || !userId) {
+    if (!fileData || !description || !price || !userId || !ipfs) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       price: parseFloat(price),
       userId,
       creatorAddress,
+      ipfs,
     });
 
     if (result.success) {
