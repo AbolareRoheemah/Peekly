@@ -12,17 +12,6 @@ export function SignInButton() {
   console.log("🎯 SignInButton component rendered");
   console.log("Current state:", { ready, authenticated, isCreatingUser });
 
-  // Check if Privy is properly initialized
-  if (!ready) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div className="text-center">
-          <p className="text-yellow-600 mb-4">⏳ Initializing authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
   const { login } = useLogin({
     onComplete: async (user) => {
       console.log("🎉 LOGIN COMPLETED!");
@@ -36,7 +25,7 @@ export function SignInButton() {
         try {
           setIsCreatingUser(true);
           // Get the user's address from the Privy user object
-          const userAddress = user.user.wallet?.address;
+          const userAddress = user.user.wallet?.address || "";
           await createUser(user.user.id, userAddress);
           console.log("✅ User created successfully in database");
         } catch (err) {
@@ -73,7 +62,7 @@ export function SignInButton() {
     } else {
       console.log("⏳ Waiting for state to be ready...");
     }
-  }, [ready, authenticated, isCreatingUser, login, router]);
+  }, [ready, authenticated, isCreatingUser]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">

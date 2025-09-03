@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
-import { uploadFileToPinata } from "@/utils/pinata";
+import { uploadFileToPinata, getUploadedFile } from "@/utils/pinata";
 
 export default function CreatePostPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -101,27 +101,19 @@ export default function CreatePostPage() {
         throw new Error("Failed to upload file to IPFS/Pinata");
       }
 
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          const base64 = result.split(",")[1];
-          resolve(base64);
-        };
-        reader.onerror = (error) => reject(error);
-      });
-      reader.readAsDataURL(selectedFile);
-      const base64Data = await base64Promise;
+      const url = await getUploadedFile(cid);
+      if (!url) {
+        throw new Error("Failed to get file URL from Pinata");
+      }
+
       setCurrentStep("creatingPost");
-      // 2. Call backend with the CID/hash
-      const response = await fetch("/api/upload-file", {
+      const response = await fetch("/api/create-post", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fileData: base64Data,
-          // fileCid: cid,
+          ipfs: url,
           description: caption,
           price: parseFloat(price),
           userId: user.id,
@@ -342,7 +334,7 @@ export default function CreatePostPage() {
                   <input
                     id="price"
                     type="number"
-                    step="0.001"
+                    step="0.0001"
                     min="0"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
