@@ -2,22 +2,48 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
+import { uploadFileToPinata } from "@/utils/pinata";
 
 export default function CreatePostPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [price, setPrice] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [currentStep, setCurrentStep] = useState<"idle" | "uploading" | "creatingPost">("idle");
   const { ready, authenticated, user } = usePrivy();
   const [submitStatus, setSubmitStatus] = useState<{
     type: "success" | "error" | null;
     message: string;
   }>({ type: null, message: "" });
+
+  // Generate preview when file is selected
+  useEffect(() => {
+    if (!selectedFile) {
+      setFilePreview(null);
+      return;
+    }
+    if (selectedFile.type.startsWith("image/")) {
+      const url = URL.createObjectURL(selectedFile);
+      setFilePreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else if (selectedFile.type.startsWith("video/")) {
+      const url = URL.createObjectURL(selectedFile);
+      setFilePreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else if (selectedFile.type.startsWith("audio/")) {
+      const url = URL.createObjectURL(selectedFile);
+      setFilePreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setFilePreview(null);
+    }
+  }, [selectedFile]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -47,6 +73,7 @@ export default function CreatePostPage() {
 
   const removeFile = () => {
     setSelectedFile(null);
+    setFilePreview(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,6 +94,13 @@ export default function CreatePostPage() {
     setSubmitStatus({ type: null, message: "" });
 
     try {
+      setCurrentStep("uploading");
+      // 1. Upload file to Pinata
+      const cid = await uploadFileToPinata(selectedFile);
+      if (!cid) {
+        throw new Error("Failed to upload file to IPFS/Pinata");
+      }
+
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve, reject) => {
         reader.onload = () => {
@@ -78,7 +112,8 @@ export default function CreatePostPage() {
       });
       reader.readAsDataURL(selectedFile);
       const base64Data = await base64Promise;
-
+      setCurrentStep("creatingPost");
+      // 2. Call backend with the CID/hash
       const response = await fetch("/api/upload-file", {
         method: "POST",
         headers: {
@@ -86,6 +121,7 @@ export default function CreatePostPage() {
         },
         body: JSON.stringify({
           fileData: base64Data,
+          // fileCid: cid,
           description: caption,
           price: parseFloat(price),
           userId: user.id,
@@ -105,6 +141,7 @@ export default function CreatePostPage() {
           message: "Post created successfully!",
         });
         setSelectedFile(null);
+        setFilePreview(null);
         setCaption("");
         setPrice("");
       } else {
@@ -119,6 +156,7 @@ export default function CreatePostPage() {
       });
     } finally {
       setIsCreating(false);
+      setCurrentStep("idle");
     }
   };
 
@@ -137,6 +175,17 @@ export default function CreatePostPage() {
     return (
       Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
     );
+  };
+
+  // Loader message for each step
+  const getLoaderMessage = () => {
+    if (currentStep === "uploading") {
+      return "Uploading file to IPFS...";
+    }
+    if (currentStep === "creatingPost") {
+      return "Creating your post...";
+    }
+    return "Creating Post...";
   };
 
   return (
@@ -208,13 +257,39 @@ export default function CreatePostPage() {
                 ) : (
                   <div className="border border-gray-600 rounded-lg p-3 md:p-4">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs md:text-sm font-medium">
-                            {getFileType(selectedFile).charAt(0)}
-                          </span>
+                      <div className="flex items-center gap-3 w-full">
+                        {/* Preview */}
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {selectedFile.type.startsWith("image/") && filePreview && (
+                            <img
+                              src={filePreview}
+                              alt={selectedFile.name}
+                              className="object-cover w-full h-full"
+                            />
+                          )}
+                          {selectedFile.type.startsWith("video/") && filePreview && (
+                            <video
+                              src={filePreview}
+                              controls
+                              className="object-cover w-full h-full"
+                            />
+                          )}
+                          {selectedFile.type.startsWith("audio/") && filePreview && (
+                            <audio
+                              src={filePreview}
+                              controls
+                              className="w-full"
+                            />
+                          )}
+                          {!selectedFile.type.startsWith("image/") &&
+                            !selectedFile.type.startsWith("video/") &&
+                            !selectedFile.type.startsWith("audio/") && (
+                              <span className="text-xs md:text-sm font-medium">
+                                {getFileType(selectedFile).charAt(0)}
+                              </span>
+                            )}
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 ml-3">
                           <p className="font-medium text-white text-sm md:text-base truncate">
                             {selectedFile.name}
                           </p>
@@ -227,7 +302,7 @@ export default function CreatePostPage() {
                       <button
                         type="button"
                         onClick={removeFile}
-                        className="p-1 text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                        className="p-1 text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2"
                       >
                         <X className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
@@ -306,7 +381,7 @@ export default function CreatePostPage() {
                 {isCreating ? (
                   <div className="flex items-center justify-center">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Creating Post...
+                    {getLoaderMessage()}
                   </div>
                 ) : (
                   "Create Post"

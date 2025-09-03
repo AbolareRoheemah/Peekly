@@ -165,7 +165,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Oshadhi Liyanage\\Learnings\\Dev3pack\\Peekly\\peekly-frontend\\src\\generated\\prisma",
+      "value": "/Users/roheemah/Desktop/miniapp/peekly/peekly-frontend/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -174,17 +174,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Oshadhi Liyanage\\Learnings\\Dev3pack\\Peekly\\peekly-frontend\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/roheemah/Desktop/miniapp/peekly/peekly-frontend/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.15.0",
@@ -193,7 +192,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {

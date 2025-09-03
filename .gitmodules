@@ -1,3 +1,6 @@
 [submodule "peekly-contract/lib/forge-std"]
 	path = peekly-contract/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "peekly-contract/lib/openzeppelin-contracts"]
+	path = peekly-contract/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
