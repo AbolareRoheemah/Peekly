@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "../../../lib/prisma";
 
 export interface GetAllPostsParams {
@@ -210,6 +211,101 @@ export async function getPostsByUser(
     return {
       success: false,
       error: "Failed to retrieve user posts from database",
+    };
+  }
+}
+
+export async function likePost(postId: string, userId: string) {
+  try {
+    const isLiked = await prisma.like.findFirst({
+      where: {
+        userId: userId,
+        postId: postId,
+      },
+    });
+
+    if (isLiked) {
+      return {
+        success: false,
+        error: "You have already liked this matcha coin",
+      };
+    }
+    const post = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        LikeCount: {
+          increment: 1,
+        },
+      },
+    });
+
+    await prisma.like.create({
+      data: {
+        userId: userId,
+        postId: postId,
+      },
+    });
+
+    revalidatePath("/");
+
+    return {
+      success: true,
+      post,
+      message: "Post liked!",
+    };
+  } catch (error) {
+    console.error("Error liking matcha coin:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to like the post",
+    };
+  }
+}
+
+export async function unlikePost(postId: string, userId: string) {
+  try {
+    const existingLike = await prisma.like.findFirst({
+      where: {
+        userId: userId,
+        postId: postId,
+      },
+    });
+
+    if (!existingLike) {
+      return {
+        success: false,
+        error: "You haven't liked this post",
+      };
+    }
+
+    const post = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        LikeCount: {
+          decrement: 1,
+        },
+      },
+    });
+
+    await prisma.like.delete({
+      where: {
+        id: existingLike.id,
+      },
+    });
+
+    revalidatePath("/");
+
+    return {
+      success: true,
+      post,
+      message: "Post unliked!",
+    };
+  } catch (error) {
+    console.error("Error unliking the post:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to unlike the post",
     };
   }
 }
