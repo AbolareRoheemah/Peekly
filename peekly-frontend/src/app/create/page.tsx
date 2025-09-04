@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import { uploadFileToPinata, getUploadedFile } from "@/utils/pinata";
+import { useRouter } from "next/navigation";
 
 export default function CreatePostPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -21,6 +22,7 @@ export default function CreatePostPage() {
     type: "success" | "error" | null;
     message: string;
   }>({ type: null, message: "" });
+  const router = useRouter()
 
   // Generate preview when file is selected
   useEffect(() => {
@@ -136,6 +138,7 @@ export default function CreatePostPage() {
         setFilePreview(null);
         setCaption("");
         setPrice("");
+        router.push("/posts")
       } else {
         throw new Error(result.error || "Failed to create post");
       }
