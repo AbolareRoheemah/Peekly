@@ -50,6 +50,7 @@ type User = {
 
 type Post = {
   likeCount: number
+  buyersCount: number
   id: string
   user: User
   ipfs: string
@@ -60,6 +61,7 @@ type Post = {
   isPurchased?: boolean
   purchaseDate?: string
   isLiked: boolean
+  hasBought: boolean
 }
 
 export default function PostsPage() {
@@ -155,25 +157,69 @@ export default function PostsPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [handleScroll])
 
+  // Helper to call buy-post API after successful contract payment
+  const callBuyPostApi = async ({
+    postId,
+    userId,
+    amount,
+    isBasePay = false,
+  }: {
+    postId: string,
+    userId: string,
+    amount: string | number,
+    isBasePay?: boolean,
+  }) => {
+    try {
+      const res = await fetch("/api/buy-post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          postId,
+          userId,
+          amount,
+          isBasePay,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to record purchase on backend");
+      }
+      // Optionally: toast.success("Purchase recorded!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to record purchase on backend");
+    }
+  };
+
   // Update post purchase status after successful payment
   useEffect(() => {
-    if ((isPayETHSuccess || isPayTokenSuccess) && payingPostId) {
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === payingPostId
-            ? { ...post, isPurchased: true, purchaseDate: new Date().toISOString() }
-            : post
-        )
-      )
-      // setPaidMap(prev => ({
-      //   ...prev,
-      //   [payingPostId]: true,
-      // }))
-      setPayingPostId(null)
-      setPaymentModalOpen(false)
-      setSelectedPost(null)
-    }
-  }, [isPayETHSuccess, isPayTokenSuccess, payingPostId])
+    // Only run if payment was successful and we have a payingPostId
+    const recordPurchase = async () => {
+      if ((isPayETHSuccess || isPayTokenSuccess) && payingPostId && address && selectedPost) {
+        // Call buy-post API with required params
+        await callBuyPostApi({
+          postId: payingPostId,
+          userId: address,
+          amount: selectedPost.price,
+          isBasePay: isPayETHSuccess, // true if ETH, false if token
+        });
+
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
+            post.id === payingPostId
+              ? { ...post, isPurchased: true, purchaseDate: new Date().toISOString() }
+              : post
+          )
+        );
+        setPayingPostId(null);
+        setPaymentModalOpen(false);
+        setSelectedPost(null);
+      }
+    };
+    recordPurchase();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPayETHSuccess, isPayTokenSuccess, payingPostId, address, selectedPost]);
 
   // Check allowance for ERC20 tokens when payment modal opens or token changes
   useEffect(() => {
@@ -284,6 +330,7 @@ export default function PostsPage() {
       }
 
       toast.success(`Payment initiated with ${tokenSymbol}!`)
+      // NOTE: buy-post API is now called in the useEffect after payment is successful
     } catch (err) {
       console.error("Payment failed:", err)
       setPayingPostId(null)
@@ -291,7 +338,6 @@ export default function PostsPage() {
   }
 
   // --- Like/Unlike API integration ---
-  // Like/Unlike API calls using /api/handle-like
   const handleLike = async (postId: string, isCurrentlyLiked: boolean, userId: string) => {
     if (!isConnected || !address) {
       toast("Please connect your wallet to like posts.")
@@ -479,7 +525,7 @@ export default function PostsPage() {
                     )}
 
                     {/* Purchased indicator */}
-                    {isPaid && (
+                    {post.hasBought && (
                       <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow">
                         ✓ Owned
                       </div>
@@ -488,7 +534,9 @@ export default function PostsPage() {
 
                   {/* Post Caption */}
                   <div className="p-4 flex flex-row justify-between items-center gap-4">
-                    <p className="text-gray-200 leading-relaxed break-words mb-0 flex-1">50 users already viewed this</p>
+                    <p className="text-gray-200 leading-relaxed break-words mb-0 flex-1">
+                      {post.buyersCount} {post.buyersCount === 1 ? "user" : "users"} already viewed this
+                    </p>
                     <div className="flex items-center text-xs text-gray-500 gap-2 flex-shrink-0">
                       <button
                         aria-label={post.isLiked ? "Unlike" : "Like"}

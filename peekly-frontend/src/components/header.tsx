@@ -30,6 +30,7 @@ function WalletDropdown({
   linkWallet,
   privyReady,
   privyAuthenticated,
+  logoutPrivy,
 }: any) {
   // Get balance for the current address and chain
   const { data: balance, isLoading: balanceLoading, error: balanceError } = useBalance({
@@ -163,6 +164,17 @@ function WalletDropdown({
             </button>
           </div>
         </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <button
+            className="bg-gray-700 hover:bg-gray-800 px-3 py-1 rounded-lg text-xs font-medium transition-colors text-red-400"
+            onClick={() => {
+              if (logoutPrivy) logoutPrivy()
+              onClose()
+            }}
+          >
+            Disconnect Privy (Logout)
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -172,7 +184,13 @@ export default function Header() {
   const router = useRouter()
 
   // Privy hooks
-  const { ready: privyReady, authenticated: privyAuthenticated, connectWallet, linkWallet } = usePrivy()
+  const { 
+    ready: privyReady, 
+    authenticated: privyAuthenticated, 
+    connectWallet, 
+    linkWallet, 
+    logout 
+  } = usePrivy()
   const { wallets = [] } = useWallets()
   const { setActiveWallet } = useSetActiveWallet()
 
@@ -192,6 +210,14 @@ export default function Header() {
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [dropdownOpen])
+
+  // Handler for logging out privy
+  const handleLogoutPrivy = async () => {
+    if (logout) {
+      await logout()
+      router.push("/sign-in")
+    }
+  }
 
   return (
     <header className="border-b border-purple-900/30 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
@@ -237,6 +263,7 @@ export default function Header() {
         linkWallet={linkWallet}
         privyReady={privyReady}
         privyAuthenticated={privyAuthenticated}
+        logoutPrivy={handleLogoutPrivy}
       />
     </header>
   )

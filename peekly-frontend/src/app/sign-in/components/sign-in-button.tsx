@@ -9,90 +9,87 @@ export function SignInButton() {
   const router = useRouter();
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
-  // console.log("🎯 SignInButton component rendered");
-  // console.log("Current state:", { ready, authenticated, isCreatingUser });
-
   const { login } = useLogin({
     onComplete: async (user) => {
-      // console.log("🎉 LOGIN COMPLETED!");
-      // console.log("Full response object:", user);
-      // console.log("User object:", user.user);
-      // console.log("User ID:", user.user?.id);
-      // console.log("Is new user:", user.isNewUser);
-      // console.log("Login method:", user.loginMethod);
-
       if (user.isNewUser) {
         try {
           setIsCreatingUser(true);
-          // Get the user's address from the Privy user object
           const userAddress = user.user.wallet?.address || "";
           await createUser(user.user.id, userAddress);
-          // console.log("✅ User created successfully in database");
         } catch (err) {
-          // console.error("❌ Failed to create user:", err);
+          // Optionally handle error
         } finally {
           setIsCreatingUser(false);
         }
-      } else {
-        // console.log("👤 User already exists in database");
       }
-
-      // console.log("🚀 Redirecting to home page...");
       router.push("/posts");
     },
     onError: (err) => {
+      // Optionally handle error
       console.error("login error", err);
     },
   });
 
-  const disableLogin = !ready || (ready && authenticated);
-
   useEffect(() => {
-    console.log("=== SIGN-IN BUTTON DEBUG ===");
-    console.log("ready", ready);
-    console.log("authenticated", authenticated);
-    console.log("isCreatingUser", isCreatingUser);
-
     if (ready && !authenticated) {
-      console.log("🔐 User not authenticated, calling login()");
       login();
     } else if (ready && authenticated && !isCreatingUser) {
-      console.log("✅ User already authenticated, redirecting to /");
-      router.push("/");
-    } else {
-      console.log("⏳ Waiting for state to be ready...");
+      router.push("/posts");
     }
   }, [ready, authenticated, isCreatingUser]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-      {authenticated ? (
-        <div className="text-center">
-          <p className="text-green-600 mb-4">✅ You are already signed in!</p>
-          <button
-            onClick={() => {
-              console.log("🔓 Signing out...");
-              logout();
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Sign Out
-          </button>
+    <main className="min-h-screen bg-black flex pt-16 justify-center">
+      <div className="text-center space-y-8 px-4">
+        <div className="flex justify-center mb-6">
+          <img src="/peekly-logo.png" alt="Peekly Logo" className="h-16 w-auto" />
         </div>
-      ) : (
-        <div className="text-center">
-          <p className="text-blue-600 mb-4">🔐 Please sign in</p>
-          <button
-            onClick={() => {
-              console.log("🔑 Manual login triggered");
-              login();
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Sign In
-          </button>
+
+        <h1 className="text-2xl font-semibold text-white mb-8">Monetize your posts</h1>
+
+        <div className="bg-gray-900 rounded-lg p-8 max-w-md mx-auto border border-purple-500/20">
+          <h2 className="text-xl font-semibold text-white mb-6 text-center">Sign in to Peekly</h2>
+
+          <div className="space-y-4">
+            {authenticated ? (
+              <div className="text-center">
+                <p className="text-green-500 mb-4">✅ You are already signed in!</p>
+                <button
+                  onClick={logout}
+                  className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={login}
+                  disabled={!ready || isCreatingUser}
+                  className="w-full bg-gradient-to-r from-purple-600 to-violet-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-violet-700 transition-colors disabled:opacity-60"
+                >
+                  {isCreatingUser ? "Signing In..." : "Sign In with Privy"}
+                </button>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-700"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-gray-900 text-gray-400">or</span>
+                  </div>
+                </div>
+                <button
+                  onClick={login}
+                  disabled={!ready || isCreatingUser}
+                  className="w-full bg-gray-800 border border-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors disabled:opacity-60"
+                >
+                  {isCreatingUser ? "Connecting..." : "Connect Wallet"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </main>
   );
 }
