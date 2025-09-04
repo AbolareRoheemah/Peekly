@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"
 
 export default function SetupProfile() {
   const [name, setName] = useState("")
@@ -27,11 +28,27 @@ export default function SetupProfile() {
 
     setIsLoading(true)
 
-    // Simulate profile creation
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      // In a real app, you'd get the current user ID from auth context
+      const currentUserId = "user_1" // Mock user ID
+      
+      const result = await api.setup.createProfile({
+        name,
+        profileImage,
+        bio: undefined, // Could add bio field to the form
+        website: undefined // Could add website field to the form
+      }, currentUserId)
 
-    // Redirect to posts page
-    router.push("/posts")
+      if (result.success) {
+        // Redirect to posts page
+        router.push("/posts")
+      }
+    } catch (error) {
+      console.error("Error creating profile:", error)
+      alert("Failed to create profile. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

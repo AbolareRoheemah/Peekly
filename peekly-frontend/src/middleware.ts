@@ -4,13 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 const PUBLIC_PAGES = ["/sign-in"];
 
 export async function middleware(req: NextRequest) {
-  console.log("middleware");
   const cookieAuthToken = req.cookies.get("privy-token");
-  console.log("cookieAuthToken", cookieAuthToken);
   const cookieSession = req.cookies.get("privy-session");
-  console.log("cookieSession", cookieSession);
   const { pathname, searchParams, search } = req.nextUrl;
-  console.log("pathname", pathname);
 
   if (PUBLIC_PAGES.includes(pathname)) {
     return NextResponse.next();
@@ -22,26 +18,30 @@ export async function middleware(req: NextRequest) {
 
   // Bypass middleware when the /refresh page is fetched, otherwise
   // we will enter an infinite loop
-  if (req.url.includes("/refresh")) return NextResponse.next();
+  if (pathname === "/refresh") return NextResponse.next();
 
   // If the user has `privy-token`, they are definitely authenticated
   const definitelyAuthenticated = Boolean(cookieAuthToken);
   // If user has `privy-session`, they also have `privy-refresh-token` and
   // may be authenticated once their session is refreshed in the client
   const maybeAuthenticated = Boolean(cookieSession);
-  console.log("definitelyAuthenticated", definitelyAuthenticated);
-  console.log("maybeAuthenticated", maybeAuthenticated);
 
   if (!definitelyAuthenticated && maybeAuthenticated) {
     // If user is not authenticated, but is maybe authenticated
     // redirect them to the `/refresh` page to trigger client-side refresh flow
-    const redirectTo = encodeURIComponent(pathname + search);
-    const refreshUrl = new URL("/refresh", req.url);
+    // Correctly build the /refresh URL with redirect param
+    const redirectTo = pathname + search;
+    const refreshUrl = req.nextUrl.clone();
+    refreshUrl.pathname = "/refresh";
+    refreshUrl.search = "";
     refreshUrl.searchParams.set("redirect", redirectTo);
     return NextResponse.redirect(refreshUrl);
   }
   if (!definitelyAuthenticated && !maybeAuthenticated) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+    const signInUrl = req.nextUrl.clone();
+    signInUrl.pathname = "/sign-in";
+    signInUrl.search = "";
+    return NextResponse.redirect(signInUrl);
   }
   return NextResponse.next();
 }
