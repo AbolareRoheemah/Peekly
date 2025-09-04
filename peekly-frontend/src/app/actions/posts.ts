@@ -227,7 +227,7 @@ export async function likePost(postId: string, userId: string) {
     if (isLiked) {
       return {
         success: false,
-        error: "You have already liked this matcha coin",
+        error: "You have already liked this post",
       };
     }
     const post = await prisma.post.update({

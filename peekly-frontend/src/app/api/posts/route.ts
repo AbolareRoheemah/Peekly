@@ -44,15 +44,16 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     const take = limit;
 
-    // Build where clause for search
-    const whereClause = search
-      ? {
-          OR: [
-            { description: { contains: search, mode: "insensitive" } },
-            { user: { username: { contains: search, mode: "insensitive" } } },
-          ],
-        }
-      : {};
+    // Build where clause for search (fix QueryMode type)
+    const whereClause =
+      search.trim() !== ""
+        ? {
+            OR: [
+              { description: { contains: search, mode: "insensitive" as const } },
+              { user: { username: { contains: search, mode: "insensitive" as const } } },
+            ],
+          }
+        : {};
 
     // Get total count for pagination
     const totalCount = await prisma.post.count({
@@ -99,3 +100,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

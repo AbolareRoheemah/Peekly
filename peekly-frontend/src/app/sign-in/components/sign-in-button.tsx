@@ -9,17 +9,17 @@ export function SignInButton() {
   const router = useRouter();
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
-  console.log("🎯 SignInButton component rendered");
-  console.log("Current state:", { ready, authenticated, isCreatingUser });
+  // console.log("🎯 SignInButton component rendered");
+  // console.log("Current state:", { ready, authenticated, isCreatingUser });
 
   const { login } = useLogin({
     onComplete: async (user) => {
-      console.log("🎉 LOGIN COMPLETED!");
-      console.log("Full response object:", user);
-      console.log("User object:", user.user);
-      console.log("User ID:", user.user?.id);
-      console.log("Is new user:", user.isNewUser);
-      console.log("Login method:", user.loginMethod);
+      // console.log("🎉 LOGIN COMPLETED!");
+      // console.log("Full response object:", user);
+      // console.log("User object:", user.user);
+      // console.log("User ID:", user.user?.id);
+      // console.log("Is new user:", user.isNewUser);
+      // console.log("Login method:", user.loginMethod);
 
       if (user.isNewUser) {
         try {
@@ -27,18 +27,18 @@ export function SignInButton() {
           // Get the user's address from the Privy user object
           const userAddress = user.user.wallet?.address || "";
           await createUser(user.user.id, userAddress);
-          console.log("✅ User created successfully in database");
+          // console.log("✅ User created successfully in database");
         } catch (err) {
-          console.error("❌ Failed to create user:", err);
+          // console.error("❌ Failed to create user:", err);
         } finally {
           setIsCreatingUser(false);
         }
       } else {
-        console.log("👤 User already exists in database");
+        // console.log("👤 User already exists in database");
       }
 
-      console.log("🚀 Redirecting to home page...");
-      router.push("/");
+      // console.log("🚀 Redirecting to home page...");
+      router.push("/posts");
     },
     onError: (err) => {
       console.error("login error", err);

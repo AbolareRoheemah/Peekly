@@ -80,7 +80,21 @@ export default function PostsPage() {
   const { approve, isApproveLoading, isApproveSuccess } = useApproveToken()
   const router = useRouter()
   const payTokenContractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
-  const { data: getAllowance, error: isAllowanceError, isPending: isAllowanceLoading } = useTokenAllowance(selectedToken.address, address, payTokenContractAddress)
+  const { 
+    data: getAllowance, 
+    isPending: isAllowanceLoading 
+  } = useTokenAllowance(
+    selectedToken.address, 
+    address ?? "", 
+    payTokenContractAddress
+  );
+  const { 
+    data: hasPaidData, 
+    isPending: hasPaidPending 
+  } = useHasPaid(
+    address ? address.toString() : "", 
+    selectedPost?.id ?? ""
+  );
 
   // Use Privy for authentication and wallet info
   const { ready, authenticated, user } = usePrivy()
@@ -91,39 +105,6 @@ export default function PostsPage() {
   const [checkingAllowance, setCheckingAllowance] = useState(false)
   const [approvalCheckedToken, setApprovalCheckedToken] = useState<string | null>(null)
 
-  // Check if user has paid for posts
-  const checkPurchaseStatus = useCallback(async () => {
-    if (!address || posts.length === 0) return
-
-    try {
-      // This would ideally be done server-side or with a batch read
-      // For now, we'll update the posts based on the isPurchased field from the API
-      // You might want to implement the useHasPaid hook for each post here
-    } catch (error) {
-      console.error('Error checking purchase status:', error)
-    }
-  }, [address, posts])
-
-  useEffect(() => {
-    checkPurchaseStatus()
-  }, [checkPurchaseStatus])
-
-  // Update post purchase status after successful payment
-  useEffect(() => {
-    if ((isPayETHSuccess || isPayTokenSuccess) && payingPostId) {
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === payingPostId
-            ? { ...post, isPurchased: true, purchaseDate: new Date().toISOString() }
-            : post
-        )
-      )
-      setPayingPostId(null)
-      setPaymentModalOpen(false)
-      setSelectedPost(null)
-    }
-  }, [isPayETHSuccess, isPayTokenSuccess, payingPostId])
-
   // Fetch posts from API
   const fetchPosts = async (pageNum: number = 1, limit: number = 20) => {
     try {
@@ -133,18 +114,11 @@ export default function PostsPage() {
         page: pageNum.toString(),
         limit: limit.toString(),
       })
-      
-      // Include user address in request to get purchase status
-      if (address) {
-        params.append('userAddress', address)
-      }
-      
+      // No need to include userAddress for purchase status, we'll use the hook
       const res = await fetch(`/api/posts?${params.toString()}`)
       if (!res.ok) throw new Error("Failed to fetch posts")
       const data = await res.json()
       if (!data.success) throw new Error(data.error || "Failed to fetch posts")
-      
-      // Always append new posts to simulate social feed
       setPosts(prev => {
         // Avoid duplicates if API returns overlapping posts
         const existingIds = new Set(prev.map(p => p.id))
@@ -181,6 +155,25 @@ export default function PostsPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [handleScroll])
 
+  // Update post purchase status after successful payment
+  useEffect(() => {
+    if ((isPayETHSuccess || isPayTokenSuccess) && payingPostId) {
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === payingPostId
+            ? { ...post, isPurchased: true, purchaseDate: new Date().toISOString() }
+            : post
+        )
+      )
+      // setPaidMap(prev => ({
+      //   ...prev,
+      //   [payingPostId]: true,
+      // }))
+      setPayingPostId(null)
+      setPaymentModalOpen(false)
+      setSelectedPost(null)
+    }
+  }, [isPayETHSuccess, isPayTokenSuccess, payingPostId])
 
   // Check allowance for ERC20 tokens when payment modal opens or token changes
   useEffect(() => {
@@ -202,7 +195,6 @@ export default function PostsPage() {
         const token = SUPPORTED_TOKENS.find(t => t.address === selectedToken.address)
         if (!token) throw new Error("Unsupported token")
         const amount = BigInt(Math.floor(Number(selectedPost.price) * Math.pow(10, token.decimals)))
-        // const currentAllowance = await getAllowance()
         setAllowance(BigInt(Number(getAllowance)))
         setApprovalCheckedToken(selectedToken.address)
         setNeedsApproval(Number(getAllowance) < amount)
@@ -253,8 +245,6 @@ export default function PostsPage() {
       if (!token) throw new Error("Unsupported token")
       const amount = BigInt(Math.floor(Number(selectedPost.price) * Math.pow(10, token.decimals)))
       await approve(selectedToken.address, amount)
-      // toast.success(`Approval successful for ${selectedToken.symbol}!`)
-      // After approval, re-check allowance
       setNeedsApproval(false)
       setAllowance(amount)
     } catch (err) {
@@ -279,15 +269,12 @@ export default function PostsPage() {
           setPayingPostId(null)
           return
         }
-        // post.id is already a string (UUID), so just pass post.id
         const value = BigInt(Math.floor(Number(post.price) * 1e18))
         await payETH(post.creatorAddress, post.id, value)
       } else {
-        // Pay with ERC20 token
         const token = SUPPORTED_TOKENS.find(t => t.address === tokenAddress)
         if (!token) throw new Error('Unsupported token')
         const amount = BigInt(Math.floor(Number(post.price) * Math.pow(10, token.decimals)))
-        // Check allowance before paying
         if (needsApproval) {
           toast.error("Please approve the token before paying.")
           setPayingPostId(null)
@@ -299,8 +286,52 @@ export default function PostsPage() {
       toast.success(`Payment initiated with ${tokenSymbol}!`)
     } catch (err) {
       console.error("Payment failed:", err)
-      // toast.error("Payment failed. Please try again.")
       setPayingPostId(null)
+    }
+  }
+
+  // --- Like/Unlike API integration ---
+  // Like/Unlike API calls using /api/handle-like
+  const handleLike = async (postId: string, isCurrentlyLiked: boolean, userId: string) => {
+    if (!isConnected || !address) {
+      toast("Please connect your wallet to like posts.")
+      return
+    }
+    setLikingPostId(postId)
+    try {
+      const res = await fetch("/api/handle-like", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          postId,
+          userId,
+          action: isCurrentlyLiked ? "unlike" : "like",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to update like")
+      }
+      // Update the post in state
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === postId
+            ? {
+                ...p,
+                isLiked: !isCurrentlyLiked,
+                likeCount: isCurrentlyLiked
+                  ? Math.max(0, (p.likeCount || 0) - 1)
+                  : (p.likeCount || 0) + 1,
+              }
+            : p
+        )
+      )
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update like")
+    } finally {
+      setLikingPostId(null)
     }
   }
 
@@ -343,7 +374,7 @@ export default function PostsPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <Header />
+      {/* <Header /> */}
 
       {/* Posts Feed */}
       <main className="max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 sm:px-4 py-8">
@@ -368,122 +399,126 @@ export default function PostsPage() {
 
         {!loading && !error && (
           <div className="flex flex-col gap-6">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-gray-900/60 border border-purple-900/30 rounded-xl overflow-hidden hover:border-purple-700/50 transition-colors shadow-lg"
-              >
-                {/* Post Header */}
-                <div className="p-4 border-b border-purple-900/20 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-lg font-bold shrink-0">
-                    {post.user?.id ? post.user.id.slice(-3) : "U"}
+            {posts.map((post) => {
+              // Determine if the user has paid for this post
+              const isPaid = post.isPurchased
+              return (
+                <div
+                  key={post.id}
+                  className="bg-gray-900/60 border border-purple-900/30 rounded-xl overflow-hidden hover:border-purple-700/50 transition-colors shadow-lg"
+                >
+                  {/* Post Header */}
+                  <div className="p-4 border-b border-purple-900/20 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-lg font-bold shrink-0">
+                      {post.user?.id ? post.user.id.slice(-3) : "U"}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-gray-200 text-sm font-semibold truncate max-w-[120px] sm:max-w-[180px]">
+                        {post.creatorAddress}
+                      </span>
+                      <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
+                    </div>
+                    <div className="ml-auto text-purple-400 font-normal text-xs flex items-center gap-1">
+                      <span className="font-bold">{post.price}</span>
+                      <span>ETH</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-gray-200 text-sm font-semibold truncate max-w-[120px] sm:max-w-[180px]">
-                      {post.creatorAddress}
-                    </span>
-                    <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
-                  </div>
-                  <div className="ml-auto text-purple-400 font-normal text-xs flex items-center gap-1">
-                    <span className="font-bold">{post.price}</span>
-                    <span>ETH</span>
-                  </div>
-                </div>
 
-                {/* Post Content */}
-                <div className="relative">
-                  {/* Show real image if purchased, else blurry */}
-                  {post.isPurchased ? (
-                    <Image
-                      src={post.ipfs || "/placeholder.svg"}
-                      alt="Post content"
-                      width={800}
-                      height={300}
-                      className="w-full h-64 sm:h-72 md:h-80 object-cover transition-all duration-300"
-                      style={{ objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div className="relative">
+                  {/* Post Content */}
+                  <div className="relative">
+                    {/* Show real image if purchased, else blurry */}
+                    {isPaid ? (
                       <Image
                         src={post.ipfs || "/placeholder.svg"}
                         alt="Post content"
                         width={800}
                         height={300}
-                        className={blurryImageClass}
-                        style={{
-                          objectFit: "cover",
-                          filter: "blur(24px) saturate(1.5) brightness(1.1) contrast(1.1)",
-                        }}
+                        className="w-full h-64 sm:h-72 md:h-80 object-cover transition-all duration-300"
+                        style={{ objectFit: "cover" }}
                       />
-                      {/* Optional: a glassy overlay for extra effect */}
-                      <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background: "linear-gradient(120deg, rgba(80,0,120,0.10) 0%, rgba(0,0,0,0.18) 100%)",
-                          backdropFilter: "blur(2px) saturate(1.2)",
-                          borderRadius: "inherit",
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Blur overlay for unpurchased content */}
-                  {!post.isPurchased && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-2xl mb-2">🔒</div>
-                        <p className="text-white font-medium mb-4">Purchase to unlock content</p>
-                        <button
-                          onClick={() => handlePurchaseClick(post)}
-                          className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
-                          disabled={isProcessing}
-                        >
-                          {payingPostId === post.id ? "Processing..." : `Buy for ${post.price} ETH`}
-                        </button>
+                    ) : (
+                      <div className="relative">
+                        <Image
+                          src={post.ipfs || "/placeholder.svg"}
+                          alt="Post content"
+                          width={800}
+                          height={300}
+                          className={blurryImageClass}
+                          style={{
+                            objectFit: "cover",
+                            filter: "blur(24px) saturate(1.5) brightness(1.1) contrast(1.1)",
+                          }}
+                        />
+                        {/* Optional: a glassy overlay for extra effect */}
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: "linear-gradient(120deg, rgba(80,0,120,0.10) 0%, rgba(0,0,0,0.18) 100%)",
+                            backdropFilter: "blur(2px) saturate(1.2)",
+                            borderRadius: "inherit",
+                          }}
+                        />
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Purchased indicator */}
-                  {post.isPurchased && (
-                    <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow">
-                      ✓ Owned
-                    </div>
-                  )}
-                </div>
+                    {/* Blur overlay for unpurchased content */}
+                    {!isPaid && (
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">🔒</div>
+                          <p className="text-white font-medium mb-4">{post.description}</p>
+                          <button
+                            onClick={() => handlePurchaseClick(post)}
+                            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
+                            disabled={isProcessing}
+                          >
+                            {payingPostId === post.id ? "Processing..." : `Buy for ${post.price} ETH`}
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Post Caption */}
-                <div className="p-4 flex flex-row justify-between items-center gap-4">
-                  <p className="text-gray-200 leading-relaxed break-words mb-0 flex-1">{post.description}</p>
-                  <div className="flex items-center text-xs text-gray-500 gap-2 flex-shrink-0">
-                    <button
-                      aria-label={post.isLiked ? "Unlike" : "Like"}
-                      className="focus:outline-none flex items-center"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        marginRight: "0.25rem",
-                        cursor: post.isLiked ? "default" : "pointer",
-                      }}
-                      disabled={post.isLiked || likingPostId === post.id}
-                      onClick={() => {}}
-                      type="button"
-                    >
-                      <HeartIcon
-                        filled={!!post.isLiked}
-                        className={`transition-all duration-200 ${
-                          post.isLiked ? "scale-110" : "opacity-80 hover:scale-110"
-                        }`}
-                      />
-                    </button>
-                    <span>
-                      {post.likeCount || 0} {post.likeCount === 1 ? "like" : "likes"}
-                    </span>
+                    {/* Purchased indicator */}
+                    {isPaid && (
+                      <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow">
+                        ✓ Owned
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Post Caption */}
+                  <div className="p-4 flex flex-row justify-between items-center gap-4">
+                    <p className="text-gray-200 leading-relaxed break-words mb-0 flex-1">50 users already viewed this</p>
+                    <div className="flex items-center text-xs text-gray-500 gap-2 flex-shrink-0">
+                      <button
+                        aria-label={post.isLiked ? "Unlike" : "Like"}
+                        className="focus:outline-none flex items-center"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          marginRight: "0.25rem",
+                          cursor: (likingPostId === post.id) ? "default" : (post.isLiked ? "pointer" : "pointer"),
+                        }}
+                        disabled={likingPostId === post.id}
+                        onClick={() => handleLike(post.id, post.isLiked, post?.user.id)}
+                        type="button"
+                      >
+                        <HeartIcon
+                          filled={!!post.isLiked}
+                          className={`transition-all duration-200 ${
+                            post.isLiked ? "scale-110" : "opacity-80 hover:scale-110"
+                          }`}
+                        />
+                      </button>
+                      <span>
+                        {post.likeCount || 0} {post.likeCount === 1 ? "like" : "likes"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

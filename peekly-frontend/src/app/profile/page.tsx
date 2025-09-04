@@ -43,16 +43,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-purple-900/30">
-        <div className="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/posts" className="text-purple-400 hover:text-purple-300 transition-colors">
-            ← Back
-          </Link>
-          <Image src="/peekly-logo.png" alt="Peekly" width={32} height={32} className="h-8 w-auto" />
-          <div className="w-12" /> {/* Spacer */}
-        </div>
-      </div>
 
       <div className="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto px-4 py-6">
         {loading && (
@@ -101,25 +91,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-        {/* Toggle Tabs */}
-        <div className="flex bg-gray-900 rounded-lg p-1 mb-6">
-          <button
-            onClick={() => setActiveTab("owned")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "owned" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            My Posts
-          </button>
-          <button
-            onClick={() => setActiveTab("purchased")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "purchased" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Purchased
-          </button>
-        </div>
 
             {/* Toggle Tabs */}
             <div className="flex bg-gray-900 rounded-lg p-1 mb-6">
