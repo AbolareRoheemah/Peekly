@@ -4,9 +4,10 @@ import Image from "next/image"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useAccount } from "wagmi"
 import { usePayETH, usePayToken, useHasPaid, useApproveToken, useTokenAllowance } from "@/hooks/use-contracts"
-import { toast, Toaster } from "sonner"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { usePrivy } from "@privy-io/react-auth"
+import Header from "@/components/header"
 
 // Supported tokens configuration
 const SUPPORTED_TOKENS = [
@@ -342,22 +343,7 @@ export default function PostsPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="border-b border-purple-900/30 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/peekly-logo.png" alt="Peekly" width={32} height={32} className="invert" />
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text text-transparent">
-              Peekly
-            </h1>
-          </div>
-          <button 
-            className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors" 
-            onClick={() => router.push("/create")}
-          >
-            Create Post
-          </button>
-        </div>
-      </header>
+      <Header />
 
       {/* Posts Feed */}
       <main className="max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 sm:px-4 py-8">
