@@ -1,10 +1,37 @@
 import { ABI } from "@/app/abi";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { useCallback, useEffect, useRef } from "react";
-import { simulateContract, writeContract } from '@wagmi/core';
+import { simulateContract } from '@wagmi/core';
 import { config } from "@/wagmi";
 import { usePrivy } from '@privy-io/react-auth';
 import { toast } from "sonner";
+
+// --- ERC20 ABI fragment for approve/allowance ---
+const ERC20_ABI = [
+  // Only the functions we need
+  {
+    "constant": true,
+    "inputs": [
+      { "name": "_owner", "type": "address" },
+      { "name": "_spender", "type": "address" }
+    ],
+    "name": "allowance",
+    "outputs": [{ "name": "remaining", "type": "uint256" }],
+    "type": "function",
+    "stateMutability": "view"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      { "name": "_spender", "type": "address" },
+      { "name": "_value", "type": "uint256" }
+    ],
+    "name": "approve",
+    "outputs": [{ "name": "success", "type": "bool" }],
+    "type": "function",
+    "stateMutability": "nonpayable"
+  }
+];
 
 // Helper to parse contract errors
 function parseContractError(error: any): string {
@@ -59,6 +86,111 @@ export function useHasPaid(account: string, contentID: string) {
     args: [account, contentID],
     // enabled: !!account && !!contentID,
   });
+}
+
+// --- ERC20 Allowance Read Hook ---
+export function useTokenAllowance(tokenAddress: string | null | undefined, owner: string | undefined, spender: string | undefined) {
+  // Only run if all params are present and tokenAddress is not null
+  return useReadContract({
+    abi: ERC20_ABI,
+    address: tokenAddress as `0x${string}`,
+    functionName: "allowance",
+    args: owner && spender && tokenAddress ? [owner, spender] : undefined,
+    // enabled: !!owner && !!spender && !!tokenAddress,
+  });
+}
+
+// --- ERC20 Approve Write Hook ---
+export function useApproveToken() {
+  const { address } = useAccount();
+  const { authenticated } = usePrivy();
+  const { data: writeData, writeContract, error: writeError, isPending: isApproveLoading } = useWriteContract();
+  const { isSuccess: isApproveSuccess, error: confirmError } = useWaitForTransactionReceipt({
+    hash: writeData,
+  });
+
+  const simulationErrorRef = useRef<any>(null);
+
+  /**
+   * Approve the contract to spend tokens on behalf of the user.
+   * @param tokenAddress ERC20 token address
+   * @param amount Amount to approve (bigint)
+   */
+  const approve = useCallback(
+    async (tokenAddress: string, amount: bigint) => {
+      simulationErrorRef.current = null;
+      if (!address) {
+        const err = new Error('Wallet not connected');
+        simulationErrorRef.current = err;
+        toast.error(firstSentence(parseContractError(err)));
+        throw err;
+      }
+      if (!authenticated) {
+        const err = new Error('User not authenticated');
+        simulationErrorRef.current = err;
+        toast.error(firstSentence(parseContractError(err)));
+        throw err;
+      }
+      if (!tokenAddress) {
+        const err = new Error('Token address is required');
+        simulationErrorRef.current = err;
+        toast.error(firstSentence(parseContractError(err)));
+        throw err;
+      }
+      try {
+        // Simulate approve
+        const { request } = await simulateContract(config, {
+          abi: ERC20_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "approve",
+          args: [contractAddress, amount],
+          account: address,
+        });
+
+        // Write approve
+        const hash = await writeContract({
+          abi: ERC20_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "approve",
+          args: [contractAddress, amount],
+        });
+
+        console.log('Approve transaction submitted:', hash);
+      } catch (error) {
+        console.error('approve error:', error);
+        simulationErrorRef.current = error;
+        toast.error(firstSentence(parseContractError(error)));
+        throw new Error(parseContractError(error));
+      }
+    },
+    [address, authenticated, writeContract]
+  );
+
+  useEffect(() => {
+    if (simulationErrorRef.current) {
+      simulationErrorRef.current = null;
+    }
+    if (isApproveSuccess) {
+      toast.success("Token approval successful!");
+      console.log('Token approval successful:', writeData);
+    }
+    if (writeError) {
+      console.error('Approve write error:', writeError);
+      toast.error(firstSentence(parseContractError(writeError)));
+    }
+    if (confirmError) {
+      console.error('Approve confirmation error:', confirmError);
+      toast.error(firstSentence(parseContractError(confirmError)));
+    }
+  }, [writeError, confirmError, isApproveSuccess, writeData]);
+
+  return {
+    approve,
+    isApproveLoading,
+    isApproveSuccess,
+    error: writeError || confirmError,
+    hash: writeData,
+  };
 }
 
 // --- Write Hooks ---

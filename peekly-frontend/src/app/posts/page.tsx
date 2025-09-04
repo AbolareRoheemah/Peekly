@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useAccount } from "wagmi"
-import { usePayETH, usePayToken, useHasPaid } from "@/hooks/use-contracts"
+import { usePayETH, usePayToken, useHasPaid, useApproveToken, useTokenAllowance } from "@/hooks/use-contracts"
 import { toast, Toaster } from "sonner"
 import { useRouter } from "next/navigation"
 import { usePrivy } from "@privy-io/react-auth"
@@ -26,12 +26,6 @@ const SUPPORTED_TOKENS = [
     symbol: 'USDC',
     name: 'USD Coin',
     address: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS as `0x${string}`,
-    decimals: 6,
-  },
-  {
-    symbol: 'USDT',
-    name: 'Tether USD',
-    address: process.env.NEXT_PUBLIC_USDT_TOKEN_ADDRESS as `0x${string}`,
     decimals: 6,
   },
 ]
@@ -82,10 +76,19 @@ export default function PostsPage() {
   const { address, isConnected } = useAccount()
   const { payETH, isPayETHLoading, isPayETHSuccess } = usePayETH()
   const { payToken, isPayTokenLoading, isPayTokenSuccess } = usePayToken()
+  const { approve, isApproveLoading, isApproveSuccess } = useApproveToken()
   const router = useRouter()
+  const payTokenContractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+  const { data: getAllowance, error: isAllowanceError, isPending: isAllowanceLoading } = useTokenAllowance(selectedToken.address, address, payTokenContractAddress)
 
   // Use Privy for authentication and wallet info
   const { ready, authenticated, user } = usePrivy()
+
+  // State for allowance and approval
+  const [allowance, setAllowance] = useState<bigint>(BigInt(0))
+  const [needsApproval, setNeedsApproval] = useState(false)
+  const [checkingAllowance, setCheckingAllowance] = useState(false)
+  const [approvalCheckedToken, setApprovalCheckedToken] = useState<string | null>(null)
 
   // Check if user has paid for posts
   const checkPurchaseStatus = useCallback(async () => {
@@ -177,6 +180,56 @@ export default function PostsPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [handleScroll])
 
+
+  // Check allowance for ERC20 tokens when payment modal opens or token changes
+  useEffect(() => {
+    const checkAllowance = async () => {
+      if (
+        !selectedPost ||
+        !selectedToken ||
+        !selectedToken.address ||
+        !address ||
+        !payTokenContractAddress
+      ) {
+        setNeedsApproval(false)
+        setAllowance(BigInt(0))
+        setApprovalCheckedToken(null)
+        return
+      }
+      setCheckingAllowance(true)
+      try {
+        const token = SUPPORTED_TOKENS.find(t => t.address === selectedToken.address)
+        if (!token) throw new Error("Unsupported token")
+        const amount = BigInt(Math.floor(Number(selectedPost.price) * Math.pow(10, token.decimals)))
+        // const currentAllowance = await getAllowance()
+        setAllowance(BigInt(Number(getAllowance)))
+        setApprovalCheckedToken(selectedToken.address)
+        setNeedsApproval(Number(getAllowance) < amount)
+      } catch (err) {
+        setNeedsApproval(true)
+        setAllowance(BigInt(0))
+        setApprovalCheckedToken(selectedToken.address)
+      } finally {
+        setCheckingAllowance(false)
+      }
+    }
+
+    if (
+      paymentModalOpen &&
+      selectedToken &&
+      selectedToken.address &&
+      address &&
+      payTokenContractAddress
+    ) {
+      checkAllowance()
+    } else {
+      setNeedsApproval(false)
+      setAllowance(BigInt(0))
+      setApprovalCheckedToken(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentModalOpen, selectedToken, selectedPost, address, payTokenContractAddress])
+
   // Open payment modal
   const handlePurchaseClick = (post: Post) => {
     if (!isConnected || !address) {
@@ -186,6 +239,27 @@ export default function PostsPage() {
     setSelectedPost(post)
     setPaymentModalOpen(true)
     setSelectedToken(SUPPORTED_TOKENS[0])
+  }
+
+  // Handle approval for ERC20 tokens
+  const handleApprove = async () => {
+    if (!selectedToken || !selectedToken.address || !address || !payTokenContractAddress || !selectedPost) {
+      toast.error("Missing information for approval.")
+      return
+    }
+    try {
+      const token = SUPPORTED_TOKENS.find(t => t.address === selectedToken.address)
+      if (!token) throw new Error("Unsupported token")
+      const amount = BigInt(Math.floor(Number(selectedPost.price) * Math.pow(10, token.decimals)))
+      await approve(selectedToken.address, amount)
+      // toast.success(`Approval successful for ${selectedToken.symbol}!`)
+      // After approval, re-check allowance
+      setNeedsApproval(false)
+      setAllowance(amount)
+    } catch (err) {
+      toast.error("Approval failed. Please try again.")
+      setNeedsApproval(true)
+    }
   }
 
   // Handle payment with selected method
@@ -212,6 +286,12 @@ export default function PostsPage() {
         const token = SUPPORTED_TOKENS.find(t => t.address === tokenAddress)
         if (!token) throw new Error('Unsupported token')
         const amount = BigInt(Math.floor(Number(post.price) * Math.pow(10, token.decimals)))
+        // Check allowance before paying
+        if (needsApproval) {
+          toast.error("Please approve the token before paying.")
+          setPayingPostId(null)
+          return
+        }
         await payToken(post.user.address, post.id, amount, tokenAddress)
       }
 
@@ -257,7 +337,7 @@ export default function PostsPage() {
     )
   )
 
-  const isProcessing = isPayETHLoading || isPayTokenLoading || !!payingPostId
+  const isProcessing = isPayETHLoading || isPayTokenLoading || isApproveLoading || !!payingPostId
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -497,6 +577,32 @@ export default function PostsPage() {
               </div>
             </div>
 
+            {/* Approval and Payment Buttons */}
+            {selectedToken && selectedToken.address && (
+              <div className="mb-4">
+                {checkingAllowance || isAllowanceLoading ? (
+                  <div className="text-center text-gray-400 text-sm mb-2">Checking allowance...</div>
+                ) : needsApproval ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-yellow-400 text-sm text-center mb-2">
+                      You need to approve spending before paying with {selectedToken.symbol}.
+                    </div>
+                    <button
+                      onClick={handleApprove}
+                      className="w-full bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800 px-4 py-3 rounded-lg font-medium transition-all"
+                      disabled={isProcessing || isApproveLoading}
+                    >
+                      {isApproveLoading ? `Approving ${selectedToken.symbol}...` : `Approve ${selectedToken.symbol}`}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-green-400 text-sm text-center mb-2">
+                    {/* Allowance sufficient for payment. */}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -515,7 +621,9 @@ export default function PostsPage() {
                 className="flex-1 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 px-4 py-3 rounded-lg font-medium transition-all"
                 disabled={isProcessing}
               >
-                {isProcessing ? 'Processing...' : `Pay with ${selectedToken.symbol}`}
+                {isProcessing
+                  ? 'Processing...'
+                  : `Pay with ${selectedToken.symbol}`}
               </button>
             </div>
           </div>
