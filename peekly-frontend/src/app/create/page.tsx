@@ -80,6 +80,7 @@ export default function CreatePostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("user", user)
     if (!authenticated || !user) {
       setSubmitStatus({
         type: "error",
@@ -124,7 +125,10 @@ export default function CreatePostPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create post");
+        // Tell the user to logout and login again using the wallet on the header
+        throw new Error(
+          "Failed to create post. Please logout and login again using the wallet button in the header."
+        );
       }
 
       const result = await response.json();
@@ -140,14 +144,20 @@ export default function CreatePostPage() {
         setPrice("");
         router.push("/posts")
       } else {
-        throw new Error(result.error || "Failed to create post");
+        // Tell the user to logout and login again using the wallet on the header
+        throw new Error(
+          (result.error ? result.error + ". " : "") +
+          "Please logout and login again using the wallet button in the header."
+        );
       }
     } catch (error) {
       console.error("Failed to create post:", error);
       setSubmitStatus({
         type: "error",
         message:
-          error instanceof Error ? error.message : "Failed to create post",
+          error instanceof Error
+            ? error.message
+            : "Failed to create post. Please logout and login again using the wallet button in the header.",
       });
     } finally {
       setIsCreating(false);
