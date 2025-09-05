@@ -25,7 +25,7 @@ function WalletDropdown({
   switchChain,
   switchNetworkError,
   wallets,
-  setActiveWallet,
+  setActiveWalletAndLogout,
   connectWallet,
   linkWallet,
   privyReady,
@@ -36,8 +36,6 @@ function WalletDropdown({
   const { data: balance, isLoading: balanceLoading, error: balanceError } = useBalance({
     address: address,
     chainId: chain?.id,
-    // enabled: !!address && !!chain,
-    // watch: true,
   })
 
   // Click outside to close
@@ -81,9 +79,9 @@ function WalletDropdown({
         <div className="mb-4">
           <div className="text-xs text-gray-400 mb-1">Network</div>
           <div className="flex items-center gap-2 flex-wrap">
-            {chain && (
+            {/* {chain && (
               <span className="text-sm text-purple-300 font-semibold">{chain.name}</span>
-            )}
+            )} */}
             {chains &&
               chains.map((x: any) => (
                 <button
@@ -127,7 +125,7 @@ function WalletDropdown({
           </div>
         </div>
         <div className="mb-4">
-          <div className="text-xs text-gray-400 mb-1">Switch Wallet</div>
+          {/* <div className="text-xs text-gray-400 mb-1">Switch Wallet</div>
           {wallets && wallets.length > 1 ? (
             <div className="flex flex-col gap-2">
               {wallets.map((wallet: any) => (
@@ -138,7 +136,7 @@ function WalletDropdown({
                       ? "bg-purple-700 text-white"
                       : "bg-gray-800 text-purple-200 hover:bg-purple-800"
                   }`}
-                  onClick={() => setActiveWallet(wallet)}
+                  onClick={() => setActiveWalletAndLogout(wallet)}
                   disabled={wallet.address === address}
                 >
                   <MonoLabel label={shorten(wallet.address)} />
@@ -148,7 +146,7 @@ function WalletDropdown({
             </div>
           ) : (
             <div className="text-gray-400 text-xs">No other wallets connected.</div>
-          )}
+          )} */}
           <div className="flex gap-2 mt-3">
             <button
               className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
@@ -156,12 +154,12 @@ function WalletDropdown({
             >
               Connect Other Wallet
             </button>
-            <button
+            {/* <button
               className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
               onClick={linkWallet}
             >
               Link Other Wallet
-            </button>
+            </button> */}
           </div>
         </div>
         <div className="flex flex-col gap-2 mt-4">
@@ -219,6 +217,14 @@ export default function Header() {
     }
   }
 
+  // Handler for switching wallet: set active wallet, then logout and redirect to sign-in
+  const handleSetActiveWalletAndLogout = async (wallet: any) => {
+    if (setActiveWallet) {
+      await setActiveWallet(wallet)
+    }
+    await handleLogoutPrivy()
+  }
+
   return (
     <header className="border-b border-purple-900/30 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
       <div className="max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -258,7 +264,7 @@ export default function Header() {
         switchChain={switchChain}
         switchNetworkError={switchNetworkError}
         wallets={wallets}
-        setActiveWallet={setActiveWallet}
+        setActiveWalletAndLogout={handleSetActiveWalletAndLogout}
         connectWallet={connectWallet}
         linkWallet={linkWallet}
         privyReady={privyReady}

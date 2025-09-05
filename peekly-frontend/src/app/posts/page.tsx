@@ -41,6 +41,17 @@ function formatDate(dateString: string) {
   })
 }
 
+// Helper to get price in selected token
+function getTokenPrice(postPriceETH: number, tokenSymbol: string) {
+  if (tokenSymbol === "LSK") {
+    return +(postPriceETH * 4800).toFixed(2)
+  }
+  if (tokenSymbol === "USDC") {
+    return +(postPriceETH * 4340).toFixed(2)
+  }
+  return postPriceETH
+}
+
 // Type for post (based on API response)
 type User = {
   id: string
@@ -240,7 +251,9 @@ export default function PostsPage() {
       try {
         const token = SUPPORTED_TOKENS.find(t => t.address === selectedToken.address)
         if (!token) throw new Error("Unsupported token")
-        const amount = BigInt(Math.floor(Number(selectedPost.price) * Math.pow(10, token.decimals)))
+        // Use the converted price for allowance check
+        const priceInToken = getTokenPrice(Number(selectedPost.price), token.symbol)
+        const amount = BigInt(Math.floor(Number(priceInToken) * Math.pow(10, token.decimals)))
         setAllowance(BigInt(Number(getAllowance)))
         setApprovalCheckedToken(selectedToken.address)
         setNeedsApproval(Number(getAllowance) < amount)
@@ -289,7 +302,9 @@ export default function PostsPage() {
     try {
       const token = SUPPORTED_TOKENS.find(t => t.address === selectedToken.address)
       if (!token) throw new Error("Unsupported token")
-      const amount = BigInt(Math.floor(Number(selectedPost.price) * Math.pow(10, token.decimals)))
+      // Use the converted price for approval
+      const priceInToken = getTokenPrice(Number(selectedPost.price), token.symbol)
+      const amount = BigInt(Math.floor(Number(priceInToken) * Math.pow(10, token.decimals)))
       await approve(selectedToken.address, amount)
       setNeedsApproval(false)
       setAllowance(amount)
@@ -320,7 +335,9 @@ export default function PostsPage() {
       } else {
         const token = SUPPORTED_TOKENS.find(t => t.address === tokenAddress)
         if (!token) throw new Error('Unsupported token')
-        const amount = BigInt(Math.floor(Number(post.price) * Math.pow(10, token.decimals)))
+        // Use the converted price for payment
+        const priceInToken = getTokenPrice(Number(post.price), token.symbol)
+        const amount = BigInt(Math.floor(Number(priceInToken) * Math.pow(10, token.decimals)))
         if (needsApproval) {
           toast.error("Please approve the token before paying.")
           setPayingPostId(null)
@@ -615,34 +632,37 @@ export default function PostsPage() {
               </p>
               
               <div className="space-y-3">
-                {SUPPORTED_TOKENS.map((token) => (
-                  <button
-                    key={token.symbol}
-                    onClick={() => setSelectedToken(token)}
-                    className={`w-full p-3 rounded-lg border transition-all ${
-                      selectedToken.symbol === token.symbol
-                        ? 'border-purple-500 bg-purple-500/10'
-                        : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                    }`}
-                    disabled={isProcessing}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-sm font-bold">
-                          {token.symbol.slice(0, 2)}
+                {SUPPORTED_TOKENS.map((token) => {
+                  const priceInToken = getTokenPrice(selectedPost.price, token.symbol)
+                  return (
+                    <button
+                      key={token.symbol}
+                      onClick={() => setSelectedToken(token)}
+                      className={`w-full p-3 rounded-lg border transition-all ${
+                        selectedToken.symbol === token.symbol
+                          ? 'border-purple-500 bg-purple-500/10'
+                          : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                      }`}
+                      disabled={isProcessing}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-sm font-bold">
+                            {token.symbol.slice(0, 2)}
+                          </div>
+                          <div className="text-left">
+                            <p className="text-white font-medium">{token.name}</p>
+                            <p className="text-gray-400 text-sm">{token.symbol}</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <p className="text-white font-medium">{token.name}</p>
+                        <div className="text-right">
+                          <p className="text-white">{priceInToken}</p>
                           <p className="text-gray-400 text-sm">{token.symbol}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-white">{selectedPost.price}</p>
-                        <p className="text-gray-400 text-sm">{token.symbol}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
