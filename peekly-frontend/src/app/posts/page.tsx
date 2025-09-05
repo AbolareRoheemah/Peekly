@@ -52,6 +52,13 @@ function getTokenPrice(postPriceETH: number, tokenSymbol: string) {
   return postPriceETH
 }
 
+// Helper to check if a file is a video
+function isVideoUrl(url: string) {
+  if (!url) return false
+  // Check for common video extensions
+  return /\.(mp4|webm|ogg|mov|m4v)$/i.test(url)
+}
+
 // Type for post (based on API response)
 type User = {
   id: string
@@ -64,6 +71,7 @@ type Post = {
   buyersCount: number
   id: string
   user: User
+  userId: string
   ipfs: string
   description: string
   price: number
@@ -73,6 +81,29 @@ type Post = {
   purchaseDate?: string
   isLiked: boolean
   hasBought: boolean
+}
+
+// Custom hook to check payment status for a specific post
+function usePostPaymentStatus(address: string | undefined, postId: string) {
+  const { 
+    data: hasPaidData, 
+    isPending: hasPaidPending,
+    error: hasPaidError,
+    refetch: refetchHasPaid
+  } = useHasPaid(
+    address || "", 
+    postId
+  );
+
+  // Return the payment status, defaulting to false if not connected or data unavailable
+  const isPaidByContract = address && hasPaidData ? Boolean(hasPaidData) : false;
+  
+  return {
+    isPaidByContract,
+    isLoading: hasPaidPending,
+    error: hasPaidError,
+    refetch: refetchHasPaid
+  };
 }
 
 export default function PostsPage() {
@@ -87,6 +118,11 @@ export default function PostsPage() {
   const [likingPostId, setLikingPostId] = useState<string | null>(null)
   const [selectedToken, setSelectedToken] = useState(SUPPORTED_TOKENS[0])
 
+  // Modal for viewing media
+  const [mediaModalOpen, setMediaModalOpen] = useState(false)
+  const [mediaModalUrl, setMediaModalUrl] = useState<string | null>(null)
+  const [mediaModalIsVideo, setMediaModalIsVideo] = useState(false)
+
   const { address, isConnected } = useAccount()
   const { payETH, isPayETHLoading, isPayETHSuccess } = usePayETH()
   const { payToken, isPayTokenLoading, isPayTokenSuccess } = usePayToken()
@@ -100,13 +136,6 @@ export default function PostsPage() {
     selectedToken.address, 
     address ?? "", 
     payTokenContractAddress
-  );
-  const { 
-    data: hasPaidData, 
-    isPending: hasPaidPending 
-  } = useHasPaid(
-    address ? address.toString() : "", 
-    selectedPost?.id ?? ""
   );
 
   // Use Privy for authentication and wallet info
@@ -170,13 +199,13 @@ export default function PostsPage() {
 
   // Helper to call buy-post API after successful contract payment
   const callBuyPostApi = async ({
-    postId,
     userId,
+    postId,
     amount,
     isBasePay = false,
   }: {
-    postId: string,
     userId: string,
+    postId: string,
     amount: string | number,
     isBasePay?: boolean,
   }) => {
@@ -187,8 +216,8 @@ export default function PostsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          postId,
           userId,
+          postId,
           amount,
           isBasePay,
         }),
@@ -203,15 +232,16 @@ export default function PostsPage() {
     }
   };
 
-  // Update post purchase status after successful payment
+  // // Update post purchase status after successful payment
   useEffect(() => {
     // Only run if payment was successful and we have a payingPostId
     const recordPurchase = async () => {
       if ((isPayETHSuccess || isPayTokenSuccess) && payingPostId && address && selectedPost) {
         // Call buy-post API with required params
+        console.log("call buy with", selectedPost.user?.id, payingPostId, selectedPost.id, selectedPost.price)
         await callBuyPostApi({
+          userId: selectedPost.user?.id,
           postId: payingPostId,
-          userId: address,
           amount: selectedPost.price,
           isBasePay: isPayETHSuccess, // true if ETH, false if token
         });
@@ -434,6 +464,212 @@ export default function PostsPage() {
 
   const isProcessing = isPayETHLoading || isPayTokenLoading || isApproveLoading || !!payingPostId
 
+  // Handler for opening media modal
+  const handleMediaClick = (url: string) => {
+    setMediaModalUrl(url)
+    setMediaModalIsVideo(isVideoUrl(url))
+    setMediaModalOpen(true)
+  }
+
+  // Handler for closing media modal
+  const handleCloseMediaModal = () => {
+    setMediaModalOpen(false)
+    setMediaModalUrl(null)
+    setMediaModalIsVideo(false)
+  }
+
+  // Component for individual post with payment status checking
+  const PostItem = ({ post }: { post: Post }) => {
+    const { isPaidByContract, isLoading: isPaymentStatusLoading } = usePostPaymentStatus(address, post.id);
+    
+    // Determine if the user has paid for this post
+    // Priority: contract data > local state > API data
+    const isPaid = isPaidByContract || post.isPurchased || post.hasBought;
+    const isVideo = isVideoUrl(post.ipfs)
+    const mediaUrl = post.ipfs || "/placeholder.svg"
+
+    return (
+      <div className="bg-gray-900/60 border border-purple-900/30 rounded-xl overflow-hidden hover:border-purple-700/50 transition-colors shadow-lg">
+        {/* Post Header */}
+        <div className="p-4 border-b border-purple-900/20 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-lg font-bold shrink-0">
+            {post.user?.id ? post.user.id.slice(-3) : "U"}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-gray-200 text-sm font-semibold truncate max-w-[120px] sm:max-w-[180px]">
+              {post.creatorAddress}
+            </span>
+            <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
+          </div>
+          <div className="ml-auto text-purple-400 font-normal text-xs flex items-center gap-1">
+            <span className="font-bold">{post.price}</span>
+            <span>ETH</span>
+          </div>
+        </div>
+
+        {/* Post Content */}
+        <div className="relative">
+          {/* Show loading state while checking payment status */}
+          {isPaymentStatusLoading && address && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            </div>
+          )}
+
+          {/* Show real image or video if purchased, else blurry */}
+          {isPaid ? (
+            <div
+              className="cursor-pointer"
+              onClick={() => handleMediaClick(mediaUrl)}
+              tabIndex={0}
+              role="button"
+              aria-label="View media"
+            >
+              {isVideo ? (
+                <video
+                  src={mediaUrl}
+                  controls
+                  width={800}
+                  height={300}
+                  className="w-full h-64 sm:h-72 md:h-80 object-cover transition-all duration-300"
+                  style={{ objectFit: "cover" }}
+                  poster="/placeholder.svg"
+                />
+              ) : (
+                <Image
+                  src={mediaUrl}
+                  alt="Post content"
+                  width={800}
+                  height={300}
+                  className="w-full h-64 sm:h-72 md:h-80 object-cover transition-all duration-300"
+                  style={{ objectFit: "cover" }}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="relative">
+              {isVideo ? (
+                <div
+                  className="w-full h-64 sm:h-72 md:h-80 bg-black/80 flex items-center justify-center cursor-pointer"
+                  onClick={() => handleMediaClick(mediaUrl)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="View media"
+                >
+                  {/* Blurry video thumbnail fallback */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-2">
+                      <svg width="40" height="40" fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="12" fill="#a78bfa" fillOpacity="0.2"/>
+                        <polygon points="10,8 16,12 10,16" fill="#a78bfa" />
+                      </svg>
+                    </div>
+                    <span className="text-purple-200 text-lg">Video</span>
+                  </div>
+                  {/* Optional: overlay for effect */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(120deg, rgba(80,0,120,0.10) 0%, rgba(0,0,0,0.18) 100%)",
+                      backdropFilter: "blur(2px) saturate(1.2)",
+                      borderRadius: "inherit",
+                    }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="cursor-pointer"
+                  onClick={() => handleMediaClick(mediaUrl)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="View media"
+                >
+                  <Image
+                    src={mediaUrl}
+                    alt="Post content"
+                    width={800}
+                    height={300}
+                    className={blurryImageClass}
+                    style={{
+                      objectFit: "cover",
+                      filter: "blur(24px) saturate(1.5) brightness(1.1) contrast(1.1)",
+                    }}
+                  />
+                  {/* Optional: a glassy overlay for extra effect */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(120deg, rgba(80,0,120,0.10) 0%, rgba(0,0,0,0.18) 100%)",
+                      backdropFilter: "blur(2px) saturate(1.2)",
+                      borderRadius: "inherit",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Blur overlay for unpurchased content */}
+          {!isPaid && (
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-2xl mb-2">🔒</div>
+                <p className="text-white font-medium mb-4">{post.description}</p>
+                <button
+                  onClick={() => handlePurchaseClick(post)}
+                  className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
+                  disabled={isProcessing}
+                >
+                  {payingPostId === post.id ? "Processing..." : `Buy for ${post.price} ETH`}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Purchased indicator */}
+          {isPaid && (
+            <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow">
+              ✓ Owned
+            </div>
+          )}
+        </div>
+
+        {/* Post Caption */}
+        <div className="p-4 flex flex-row justify-between items-center gap-4">
+          <p className="text-gray-200 leading-relaxed break-words mb-0 flex-1">
+            {post.buyersCount} {post.buyersCount === 1 ? "user" : "users"} already viewed this
+          </p>
+          <div className="flex items-center text-xs text-gray-500 gap-2 flex-shrink-0">
+            <button
+              aria-label={post.isLiked ? "Unlike" : "Like"}
+              className="focus:outline-none flex items-center"
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                marginRight: "0.25rem",
+                cursor: (likingPostId === post.id) ? "default" : (post.isLiked ? "pointer" : "pointer"),
+              }}
+              disabled={likingPostId === post.id}
+              onClick={() => handleLike(post.id, post.isLiked, post?.user.id)}
+              type="button"
+            >
+              <HeartIcon
+                filled={!!post.isLiked}
+                className={`transition-all duration-200 ${
+                  post.isLiked ? "scale-110" : "opacity-80 hover:scale-110"
+                }`}
+              />
+            </button>
+            <span>
+              {post.likeCount || 0} {post.likeCount === 1 ? "like" : "likes"}
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -462,128 +698,9 @@ export default function PostsPage() {
 
         {!loading && !error && (
           <div className="flex flex-col gap-6">
-            {posts.map((post) => {
-              // Determine if the user has paid for this post
-              const isPaid = post.isPurchased
-              return (
-                <div
-                  key={post.id}
-                  className="bg-gray-900/60 border border-purple-900/30 rounded-xl overflow-hidden hover:border-purple-700/50 transition-colors shadow-lg"
-                >
-                  {/* Post Header */}
-                  <div className="p-4 border-b border-purple-900/20 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-lg font-bold shrink-0">
-                      {post.user?.id ? post.user.id.slice(-3) : "U"}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-gray-200 text-sm font-semibold truncate max-w-[120px] sm:max-w-[180px]">
-                        {post.creatorAddress}
-                      </span>
-                      <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
-                    </div>
-                    <div className="ml-auto text-purple-400 font-normal text-xs flex items-center gap-1">
-                      <span className="font-bold">{post.price}</span>
-                      <span>ETH</span>
-                    </div>
-                  </div>
-
-                  {/* Post Content */}
-                  <div className="relative">
-                    {/* Show real image if purchased, else blurry */}
-                    {isPaid ? (
-                      <Image
-                        src={post.ipfs || "/placeholder.svg"}
-                        alt="Post content"
-                        width={800}
-                        height={300}
-                        className="w-full h-64 sm:h-72 md:h-80 object-cover transition-all duration-300"
-                        style={{ objectFit: "cover" }}
-                      />
-                    ) : (
-                      <div className="relative">
-                        <Image
-                          src={post.ipfs || "/placeholder.svg"}
-                          alt="Post content"
-                          width={800}
-                          height={300}
-                          className={blurryImageClass}
-                          style={{
-                            objectFit: "cover",
-                            filter: "blur(24px) saturate(1.5) brightness(1.1) contrast(1.1)",
-                          }}
-                        />
-                        {/* Optional: a glassy overlay for extra effect */}
-                        <div
-                          className="absolute inset-0 pointer-events-none"
-                          style={{
-                            background: "linear-gradient(120deg, rgba(80,0,120,0.10) 0%, rgba(0,0,0,0.18) 100%)",
-                            backdropFilter: "blur(2px) saturate(1.2)",
-                            borderRadius: "inherit",
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Blur overlay for unpurchased content */}
-                    {!isPaid && (
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-2xl mb-2">🔒</div>
-                          <p className="text-white font-medium mb-4">{post.description}</p>
-                          <button
-                            onClick={() => handlePurchaseClick(post)}
-                            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
-                            disabled={isProcessing}
-                          >
-                            {payingPostId === post.id ? "Processing..." : `Buy for ${post.price} ETH`}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Purchased indicator */}
-                    {post.hasBought && (
-                      <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow">
-                        ✓ Owned
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Post Caption */}
-                  <div className="p-4 flex flex-row justify-between items-center gap-4">
-                    <p className="text-gray-200 leading-relaxed break-words mb-0 flex-1">
-                      {post.buyersCount} {post.buyersCount === 1 ? "user" : "users"} already viewed this
-                    </p>
-                    <div className="flex items-center text-xs text-gray-500 gap-2 flex-shrink-0">
-                      <button
-                        aria-label={post.isLiked ? "Unlike" : "Like"}
-                        className="focus:outline-none flex items-center"
-                        style={{
-                          background: "none",
-                          border: "none",
-                          padding: 0,
-                          marginRight: "0.25rem",
-                          cursor: (likingPostId === post.id) ? "default" : (post.isLiked ? "pointer" : "pointer"),
-                        }}
-                        disabled={likingPostId === post.id}
-                        onClick={() => handleLike(post.id, post.isLiked, post?.user.id)}
-                        type="button"
-                      >
-                        <HeartIcon
-                          filled={!!post.isLiked}
-                          className={`transition-all duration-200 ${
-                            post.isLiked ? "scale-110" : "opacity-80 hover:scale-110"
-                          }`}
-                        />
-                      </button>
-                      <span>
-                        {post.likeCount || 0} {post.likeCount === 1 ? "like" : "likes"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {posts.map((post) => (
+              <PostItem key={post.id} post={post} />
+            ))}
           </div>
         )}
 
@@ -715,6 +832,49 @@ export default function PostsPage() {
                   : `Pay with ${selectedToken.symbol}`}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Media Modal for viewing image or video */}
+      {mediaModalOpen && mediaModalUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={handleCloseMediaModal}
+          style={{ cursor: "zoom-out" }}
+        >
+          <div
+            className="relative max-w-2xl w-full max-h-[90vh] flex items-center justify-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-2 z-10 bg-gray-800/80 hover:bg-gray-700 text-white rounded-full p-2"
+              onClick={handleCloseMediaModal}
+              aria-label="Close"
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="6" y1="18" x2="18" y2="6" />
+              </svg>
+            </button>
+            {mediaModalIsVideo ? (
+              <video
+                src={mediaModalUrl}
+                controls
+                autoPlay
+                className="max-w-full max-h-[80vh] rounded-lg bg-black"
+                style={{ background: "#000" }}
+              />
+            ) : (
+              <Image
+                src={mediaModalUrl}
+                alt="Media"
+                width={900}
+                height={600}
+                className="max-w-full max-h-[80vh] rounded-lg"
+                style={{ objectFit: "contain" }}
+              />
+            )}
           </div>
         </div>
       )}
