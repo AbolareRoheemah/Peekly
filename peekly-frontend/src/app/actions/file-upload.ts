@@ -21,16 +21,16 @@ export interface CreatePostData {
 export async function createPost(data: CreatePostData) {
   try {
     // First verify the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: data.userId },
-    });
+    // const existingUser = await prisma.user.findUnique({
+    //   where: { id: data.userId },
+    // });
 
-    if (!existingUser) {
-      return {
-        success: false,
-        error: `User with ID ${data.userId} not found in database`,
-      };
-    }
+    // if (!existingUser) {
+    //   return {
+    //     success: false,
+    //     error: `User with ID ${data.userId} not found in database`,
+    //   };
+    // }
 
     const post = await prisma.post.create({
       data: {
@@ -79,16 +79,16 @@ export async function createPost(data: CreatePostData) {
 export async function createPostOnly(data: CreatePostData) {
   try {
     // First verify the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: data.userId },
-    });
+    // const existingUser = await prisma.user.findUnique({
+    //   where: { id: data.userId },
+    // });
 
-    if (!existingUser) {
-      return {
-        success: false,
-        error: `User with ID ${data.userId} not found in database`,
-      };
-    }
+    // if (!existingUser) {
+    //   return {
+    //     success: false,
+    //     error: `User with ID ${data.userId} not found in database`,
+    //   };
+    // }
 
     const post = await prisma.post.create({
       data: {
@@ -195,16 +195,16 @@ export async function uploadFileToFilecoin(data: FileUploadData) {
 export async function getUserContent(userId: string) {
   try {
     // First verify the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // const existingUser = await prisma.user.findUnique({
+    //   where: { id: userId },
+    // });
 
-    if (!existingUser) {
-      return {
-        success: false,
-        error: `User with ID ${userId} not found in database`,
-      };
-    }
+    // if (!existingUser) {
+    //   return {
+    //     success: false,
+    //     error: `User with ID ${userId} not found in database`,
+    //   };
+    // }
 
     // Fetch all posts created by the user with related data
     const userPosts = await prisma.post.findMany({
@@ -268,6 +268,11 @@ export async function getUserContent(userId: string) {
       0
     );
 
+    // If you want to include user info, you can fetch it here, but skip the existence check
+    // const existingUser = await prisma.user.findUnique({
+    //   where: { id: userId },
+    // });
+
     return {
       success: true,
       data: {
@@ -278,11 +283,11 @@ export async function getUserContent(userId: string) {
           totalLikes,
           totalViews,
         },
-        user: {
-          id: existingUser.id,
-          username: existingUser.username,
-          address: existingUser.address,
-        },
+        // user: existingUser ? {
+        //   id: existingUser.id,
+        //   username: existingUser.username,
+        //   address: existingUser.address,
+        // } : undefined,
       },
       message: "User content fetched successfully!",
     };
@@ -299,16 +304,16 @@ export async function getUserContent(userId: string) {
 export async function getUserContentSummary(userId: string) {
   try {
     // First verify the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // const existingUser = await prisma.user.findUnique({
+    //   where: { id: userId },
+    // });
 
-    if (!existingUser) {
-      return {
-        success: false,
-        error: `User with ID ${userId} not found in database`,
-      };
-    }
+    // if (!existingUser) {
+    //   return {
+    //     success: false,
+    //     error: `User with ID ${userId} not found in database`,
+    //   };
+    // }
 
     // Get aggregated stats without fetching all post details
     const [postCount, totalEarnings, totalLikes, totalViews] =
@@ -336,6 +341,11 @@ export async function getUserContentSummary(userId: string) {
         }),
       ]);
 
+    // If you want to include user info, you can fetch it here, but skip the existence check
+    // const existingUser = await prisma.user.findUnique({
+    //   where: { id: userId },
+    // });
+
     return {
       success: true,
       data: {
@@ -345,11 +355,11 @@ export async function getUserContentSummary(userId: string) {
           totalLikes,
           totalViews,
         },
-        user: {
-          id: existingUser.id,
-          username: existingUser.username,
-          address: existingUser.address,
-        },
+        // user: existingUser ? {
+        //   id: existingUser.id,
+        //   username: existingUser.username,
+        //   address: existingUser.address,
+        // } : undefined,
       },
       message: "User content summary fetched successfully!",
     };
