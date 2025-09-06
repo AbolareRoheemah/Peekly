@@ -18,20 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `User with ID ${userId} not found in database`,
-        },
-        { status: 404 }
-      );
-    }
+    // --- Removed user existence check as requested ---
 
     // Verify the post exists
     const existingPost = await prisma.post.findUnique({

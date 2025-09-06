@@ -32,9 +32,9 @@ export async function middleware(req: NextRequest) {
     // Correctly build the /refresh URL with redirect param
     const redirectTo = pathname + search;
     const refreshUrl = req.nextUrl.clone();
-    refreshUrl.pathname = "/refresh";
+    refreshUrl.pathname = "/sign-in";
     refreshUrl.search = "";
-    refreshUrl.searchParams.set("redirect", redirectTo);
+    // refreshUrl.searchParams.set("redirect", redirectTo);
     return NextResponse.redirect(refreshUrl);
   }
   if (!definitelyAuthenticated && !maybeAuthenticated) {

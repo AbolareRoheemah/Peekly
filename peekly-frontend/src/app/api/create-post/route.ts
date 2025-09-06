@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call the createPost server action
+    // Call the createPost server action, but do NOT require user to exist
+    // (Assume createPost implementation no longer checks for user existence)
     const result = await createPost({
       userId,
       ipfs,
