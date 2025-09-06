@@ -154,12 +154,12 @@ function WalletDropdown({
             >
               Connect Other Wallet
             </button>
-            {/* <button
+            <button
               className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
               onClick={linkWallet}
             >
               Link Other Wallet
-            </button> */}
+            </button>
           </div>
         </div>
         <div className="flex flex-col gap-2 mt-4">
