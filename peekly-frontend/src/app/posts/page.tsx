@@ -139,7 +139,7 @@ export default function PostsPage() {
   );
 
   // Use Privy for authentication and wallet info
-  const { ready, authenticated, user } = usePrivy()
+  const { ready, authenticated, user, logout } = usePrivy()
 
   // State for allowance and approval
   const [allowance, setAllowance] = useState<bigint>(BigInt(0))
@@ -427,6 +427,56 @@ export default function PostsPage() {
       setLikingPostId(null)
     }
   }
+
+  // --- Create Post API integration with Privy logout on user-not-found error ---
+  const createPost = async (postData: {
+    userId: string,
+    ipfs: string,
+    description: string,
+    price: number,
+    creatorAddress?: string,
+  }) => {
+    try {
+      const res = await fetch("/api/create-post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postData),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        // Check for the specific error message
+        if (
+          data?.error &&
+          data.error.includes("User not found in database")
+        ) {
+          // Disconnect Privy and route to sign-in
+          if (logout) {
+            await logout();
+          }
+          router.push("/sign-in");
+          return;
+        }
+        throw new Error(data.error || "Failed to create post");
+      }
+      // Optionally: toast.success("Post created!");
+      return data;
+    } catch (err: any) {
+      // If error is not the user-not-found, show toast
+      if (
+        err?.message &&
+        err.message.includes("User not found in database. Please sign out and sign in again.")
+      ) {
+        if (logout) {
+          await logout();
+        }
+        router.push("/sign-in");
+        return;
+      }
+      toast.error(err.message || "Failed to create post");
+    }
+  };
 
   // Helper for blurry effect
   const blurryImageClass =
