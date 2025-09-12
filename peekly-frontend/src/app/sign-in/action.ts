@@ -6,8 +6,14 @@ export async function createUser(userId: string, address: string) {
   console.log("createUser");
   console.log("userId", userId);
   console.log("address", address);
-  const user = await prisma.user.create({
-    data: {
+  
+  // Use upsert to create user if doesn't exist, or update if exists
+  const user = await prisma.user.upsert({
+    where: { id: userId },
+    update: {
+      address: address, // Update address if user exists
+    },
+    create: {
       id: userId,
       address: address,
     },

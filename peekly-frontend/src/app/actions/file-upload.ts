@@ -20,17 +20,27 @@ export interface CreatePostData {
 
 export async function createPost(data: CreatePostData) {
   try {
+    console.log("createPost - Received data:", data);
+    console.log("createPost - User ID:", data.userId);
+    
     // First verify the user exists
-    // const existingUser = await prisma.user.findUnique({
-    //   where: { id: data.userId },
-    // });
+    const existingUser = await prisma.user.findUnique({
+      where: { id: data.userId },
+    });
+    
+    console.log("createPost - Existing user:", existingUser);
 
-    // if (!existingUser) {
-    //   return {
-    //     success: false,
-    //     error: `User with ID ${data.userId} not found in database`,
-    //   };
-    // }
+    if (!existingUser) {
+      console.log("createPost - User not found in database, creating user...");
+      // Create the user if they don't exist
+      await prisma.user.create({
+        data: {
+          id: data.userId,
+          address: data.creatorAddress || "",
+        },
+      });
+      console.log("createPost - User created successfully");
+    }
 
     const post = await prisma.post.create({
       data: {

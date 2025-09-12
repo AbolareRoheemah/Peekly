@@ -11,16 +11,25 @@ export function SignInButton() {
 
   const { login } = useLogin({
     onComplete: async (user) => {
-      if (user.isNewUser) {
+      try {
+        setIsCreatingUser(true);
+        const userAddress = user.user.wallet?.address || "";
+        
+        console.log("Sign-in onComplete - User ID:", user.user.id);
+        console.log("Sign-in onComplete - User Address:", userAddress);
+        
+        // Always try to create user (will handle duplicates gracefully)
         try {
-          setIsCreatingUser(true);
-          const userAddress = user.user.wallet?.address || "";
-          await createUser(user.user.id, userAddress);
+          const createdUser = await createUser(user.user.id, userAddress);
+          console.log("User created/updated successfully:", createdUser);
         } catch (err) {
-          // Optionally handle error
-        } finally {
-          setIsCreatingUser(false);
+          // User might already exist, which is fine
+          console.log("User might already exist:", err);
         }
+      } catch (err) {
+        console.error("Error in sign-in flow:", err);
+      } finally {
+        setIsCreatingUser(false);
       }
       router.push("/posts");
     },

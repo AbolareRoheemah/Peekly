@@ -80,7 +80,10 @@ export default function CreatePostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("user", user)
+    console.log("Create post - User object:", user);
+    console.log("Create post - User ID:", user?.id);
+    console.log("Create post - User wallet address:", user?.wallet?.address);
+    
     if (!authenticated || !user) {
       setSubmitStatus({
         type: "error",
